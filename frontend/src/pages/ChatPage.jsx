@@ -38,12 +38,19 @@ const ChatPage = () => {
 
   useEffect(() => {
     const initChat = async () => {
-      if (!tokenData?.token || !authUser) return;
+      if (!tokenData?.token || !authUser) {
+        console.log("Missing token or auth user:", { token: !!tokenData?.token, authUser: !!authUser });
+        return;
+      }
 
       try {
         console.log("Initializing stream chat client...");
 
         const client = StreamChat.getInstance(STREAM_API_KEY);
+
+        if (!STREAM_API_KEY) {
+          throw new Error("Stream API key is missing");
+        }
 
         await client.connectUser(
           {
@@ -54,24 +61,23 @@ const ChatPage = () => {
           tokenData.token
         );
 
-        //
-        const channelId = [authUser._id, targetUserId].sort().join("-");
+        console.log("User connected to Stream Chat");
 
-        // you and me
-        // if i start the chat => channelId: [myId, yourId]
-        // if you start the chat => channelId: [yourId, myId]  => [myId,yourId]
+        const channelId = [authUser._id, targetUserId].sort().join("-");
+        console.log("Creating channel with ID:", channelId);
 
         const currChannel = client.channel("messaging", channelId, {
           members: [authUser._id, targetUserId],
         });
 
         await currChannel.watch();
+        console.log("Channel created and watched successfully");
 
         setChatClient(client);
         setChannel(currChannel);
       } catch (error) {
         console.error("Error initializing chat:", error);
-        toast.error("Could not connect to chat. Please try again.");
+        toast.error(`Could not connect to chat: ${error.message}`);
       } finally {
         setLoading(false);
       }

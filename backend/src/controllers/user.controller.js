@@ -56,8 +56,8 @@ export async function sendFriendRequest(req, res) {
     // check if a req already exists
     const existingRequest = await FriendRequest.findOne({
       $or: [
-        { sender: myId, recipient: recipientId },
-        { sender: recipientId, recipient: myId },
+        { sender: myId, recipient: recipientId, status: "pending" },
+        { sender: recipientId, recipient: myId, status: "pending" },
       ],
     });
 
@@ -66,6 +66,14 @@ export async function sendFriendRequest(req, res) {
         .status(400)
         .json({ message: "A friend request already exists between you and this user" });
     }
+
+    // Delete any previous accepted requests between these users
+    await FriendRequest.deleteMany({
+      $or: [
+        { sender: myId, recipient: recipientId },
+        { sender: recipientId, recipient: myId },
+      ],
+    });
 
     const friendRequest = await FriendRequest.create({
       sender: myId,

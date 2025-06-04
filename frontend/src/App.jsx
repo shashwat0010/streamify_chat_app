@@ -7,6 +7,8 @@ import NotificationsPage from "./pages/NotificationsPage.jsx";
 import CallPage from "./pages/CallPage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
 import OnboardingPage from "./pages/OnboardingPage.jsx";
+import Friends from "./components/Friends.jsx";
+import SendFriendRequest from "./components/SendFriendRequest.jsx";
 
 import { Toaster } from "react-hot-toast";
 
@@ -57,6 +59,27 @@ const App = () => {
             isAuthenticated && isOnboarded ? (
               <Layout showSidebar={true}>
                 <NotificationsPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+        <Route
+          path="/friends"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <div className="container mx-auto py-8">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="md:col-span-2">
+                      <Friends />
+                    </div>
+                    <div>
+                      <SendFriendRequest />
+                    </div>
+                  </div>
+                </div>
               </Layout>
             ) : (
               <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />

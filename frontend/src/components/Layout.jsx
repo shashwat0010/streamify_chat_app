@@ -1,7 +1,10 @@
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
+import useSocket from "../hooks/useSocket";
 
 const Layout = ({ children, showSidebar = false }) => {
+  useSocket(); // Initialize socket connection and listeners
+
   return (
     <div className="min-h-screen">
       <div className="flex">

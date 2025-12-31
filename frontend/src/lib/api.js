@@ -14,6 +14,11 @@ export const logout = async () => {
   return response.data;
 };
 
+export const verifyEmail = async (verificationData) => {
+  const response = await axiosInstance.post("/auth/verify-email", verificationData);
+  return response.data;
+};
+
 export const getAuthUser = async () => {
   try {
     const res = await axiosInstance.get("/auth/me");
@@ -66,5 +71,20 @@ export async function removeFriend(friendId) {
 
 export async function getStreamToken() {
   const response = await axiosInstance.get("/chat/token");
+  return response.data;
+}
+
+export async function saveMeeting(meetingData) {
+  const response = await axiosInstance.post("/meetings", meetingData);
+  return response.data;
+}
+
+export async function updateProfile(profileData) {
+  const response = await axiosInstance.put("/users/profile", profileData);
+  return response.data;
+}
+
+export async function checkMeetingRecording(meetingId) {
+  const response = await axiosInstance.post(`/meetings/${meetingId}/check-recording`);
   return response.data;
 }

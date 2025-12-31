@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router";
 import useAuthUser from "../hooks/useAuthUser";
-import { BellIcon, HomeIcon, ShipWheelIcon, UsersIcon } from "lucide-react";
+import { BellIcon, HomeIcon, ShipWheelIcon, UsersIcon, HistoryIcon } from "lucide-react";
 
 const Sidebar = () => {
   const { authUser } = useAuthUser();
@@ -21,9 +21,8 @@ const Sidebar = () => {
       <nav className="flex-1 p-4 space-y-1">
         <Link
           to="/"
-          className={`btn btn-ghost justify-start w-full gap-3 px-3 normal-case ${
-            currentPath === "/" ? "btn-active" : ""
-          }`}
+          className={`btn btn-ghost justify-start w-full gap-3 px-3 normal-case ${currentPath === "/" ? "btn-active" : ""
+            }`}
         >
           <HomeIcon className="size-5 text-base-content opacity-70" />
           <span>Home</span>
@@ -31,9 +30,8 @@ const Sidebar = () => {
 
         <Link
           to="/friends"
-          className={`btn btn-ghost justify-start w-full gap-3 px-3 normal-case ${
-            currentPath === "/friends" ? "btn-active" : ""
-          }`}
+          className={`btn btn-ghost justify-start w-full gap-3 px-3 normal-case ${currentPath === "/friends" ? "btn-active" : ""
+            }`}
         >
           <UsersIcon className="size-5 text-base-content opacity-70" />
           <span>Friends</span>
@@ -41,18 +39,26 @@ const Sidebar = () => {
 
         <Link
           to="/notifications"
-          className={`btn btn-ghost justify-start w-full gap-3 px-3 normal-case ${
-            currentPath === "/notifications" ? "btn-active" : ""
-          }`}
+          className={`btn btn-ghost justify-start w-full gap-3 px-3 normal-case ${currentPath === "/notifications" ? "btn-active" : ""
+            }`}
         >
           <BellIcon className="size-5 text-base-content opacity-70" />
           <span>Notifications</span>
+        </Link>
+
+        <Link
+          to="/history"
+          className={`btn btn-ghost justify-start w-full gap-3 px-3 normal-case ${currentPath === "/history" ? "btn-active" : ""
+            }`}
+        >
+          <HistoryIcon className="size-5 text-base-content opacity-70" />
+          <span>History</span>
         </Link>
       </nav>
 
       {/* USER PROFILE SECTION */}
       <div className="p-4 border-t border-base-300 mt-auto">
-        <div className="flex items-center gap-3">
+        <Link to="/profile" className="flex items-center gap-3 hover:bg-base-300 p-2 rounded-lg transition-colors">
           <div className="avatar">
             <div className="w-10 rounded-full">
               <img src={authUser?.profilePic} alt="User Avatar" />
@@ -65,7 +71,7 @@ const Sidebar = () => {
               Online
             </p>
           </div>
-        </div>
+        </Link>
       </div>
     </aside>
   );

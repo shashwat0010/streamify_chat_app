@@ -7,6 +7,7 @@ import {
   getOutgoingFriendReqs,
   getRecommendedUsers,
   sendFriendRequest,
+  updateProfile,
 } from "../controllers/user.controller.js";
 import User from "../models/User.js";
 
@@ -14,6 +15,8 @@ const router = express.Router();
 
 // apply auth middleware to all routes
 router.use(protectRoute);
+
+router.put("/profile", updateProfile);
 
 router.get("/", getRecommendedUsers);
 router.get("/friends", getMyFriends);
@@ -29,7 +32,7 @@ router.get("/search", async (req, res) => {
   try {
     const { email } = req.query;
     const user = await User.findOne({ email }).select("-password");
-    
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }

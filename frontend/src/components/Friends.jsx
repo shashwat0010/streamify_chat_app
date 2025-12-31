@@ -2,15 +2,16 @@ import { useEffect } from 'react';
 import useFriendStore from '../store/friendStore';
 
 const Friends = () => {
-  const { 
-    friends, 
-    friendRequests, 
-    loading, 
-    error, 
-    getFriends, 
-    getFriendRequests, 
-    acceptFriendRequest, 
-    removeFriend 
+  const {
+    friends,
+    friendRequests,
+    isFetchingFriends,
+    processingIds,
+    error,
+    getFriends,
+    getFriendRequests,
+    acceptFriendRequest,
+    removeFriend
   } = useFriendStore();
 
   useEffect(() => {
@@ -18,13 +19,15 @@ const Friends = () => {
     getFriendRequests();
   }, [getFriends, getFriendRequests]);
 
-  if (loading) {
+  if (isFetchingFriends && friends.length === 0) {
     return <div className="flex justify-center items-center h-full">Loading...</div>;
   }
 
   if (error) {
     return <div className="text-red-500 text-center">{error}</div>;
   }
+
+  const isProcessing = (id) => processingIds.includes(id);
 
   return (
     <div className="p-4">
@@ -47,9 +50,10 @@ const Friends = () => {
                 </div>
                 <button
                   onClick={() => acceptFriendRequest(request._id)}
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                  disabled={isProcessing(request._id)}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
                 >
-                  Accept
+                  {isProcessing(request._id) ? 'Accepting...' : 'Accept'}
                 </button>
               </div>
             ))}
@@ -79,12 +83,17 @@ const Friends = () => {
                   </div>
                   <button
                     onClick={() => removeFriend(friend._id)}
-                    className="text-red-500 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition-colors"
+                    disabled={isProcessing(friend._id)}
+                    className="text-red-500 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition-colors disabled:opacity-50"
                     title="Remove Friend"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
+                    {isProcessing(friend._id) ? (
+                      <div className="w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    )}
                   </button>
                 </div>
               </div>

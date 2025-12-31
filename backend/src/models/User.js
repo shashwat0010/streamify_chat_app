@@ -47,6 +47,12 @@ const userSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: String,
+    verificationTokenExpiresAt: Date,
   },
   { timestamps: true }
 );

@@ -28,11 +28,18 @@ export async function signup(req, res) {
     const idx = Math.floor(Math.random() * 100) + 1; // generate a num between 1-100
     const randomAvatar = `https://avatar.iran.liara.run/public/${idx}.png`;
 
+    // Generate 6-digit verification code
+    const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationTokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
     const newUser = await User.create({
       email,
       fullName,
       password,
       profilePic: randomAvatar,
+      verificationToken,
+      verificationTokenExpiresAt,
+      isVerified: false,
     });
 
     try {
@@ -46,7 +53,44 @@ export async function signup(req, res) {
       console.log("Error creating Stream user:", error);
     }
 
-    const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET_KEY, {
+    // Send verification email
+    const { sendVerificationEmail } = await import("../lib/email.js");
+    await sendVerificationEmail(newUser.email, verificationToken);
+
+    res.status(201).json({
+      success: true,
+      message: "User created. Please verify your email.",
+      userId: newUser._id
+    });
+
+  } catch (error) {
+    console.log("Error in signup controller", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+export async function verifyEmail(req, res) {
+  try {
+    const { code } = req.body;
+
+    if (!code) return res.status(400).json({ message: "Verification code is required" });
+
+    const user = await User.findOne({
+      verificationToken: code,
+      verificationTokenExpiresAt: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired verification code" });
+    }
+
+    user.isVerified = true;
+    user.verificationToken = undefined;
+    user.verificationTokenExpiresAt = undefined;
+    await user.save();
+
+    // Now generate token and log them in
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, {
       expiresIn: "7d",
     });
 
@@ -57,9 +101,10 @@ export async function signup(req, res) {
       secure: process.env.NODE_ENV === "production",
     });
 
-    res.status(201).json({ success: true, user: newUser });
+    res.status(200).json({ success: true, user, message: "Email verified successfully" });
+
   } catch (error) {
-    console.log("Error in signup controller", error);
+    console.log("Error in verifyEmail controller", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
@@ -77,6 +122,10 @@ export async function login(req, res) {
 
     const isPasswordCorrect = await user.matchPassword(password);
     if (!isPasswordCorrect) return res.status(401).json({ message: "Invalid email or password" });
+
+    if (!user.isVerified) {
+      return res.status(403).json({ message: "Email not verified. Please check your email for the verification code." });
+    }
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, {
       expiresIn: "7d",

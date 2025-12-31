@@ -6,12 +6,16 @@ import toast from 'react-hot-toast';
 const SendFriendRequest = () => {
   const [email, setEmail] = useState('');
   const [searchResult, setSearchResult] = useState(null);
-  const { sendFriendRequest, loading, error } = useFriendStore();
+  const [isSearching, setIsSearching] = useState(false);
+  const { sendFriendRequest, processingIds, error } = useFriendStore();
+
+  const isSending = processingIds.includes("send_request");
 
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!email) return;
 
+    setIsSearching(true);
     try {
       const response = await axios.get(`/api/users/search?email=${email}`, { withCredentials: true });
       if (response.data) {
@@ -24,6 +28,8 @@ const SendFriendRequest = () => {
       console.error('Failed to search user:', error);
       toast.error(error.response?.data?.message || 'User not found');
       setSearchResult(null);
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -62,10 +68,10 @@ const SendFriendRequest = () => {
         {error && <p className="text-red-500 text-sm">{error}</p>}
         <button
           type="submit"
-          disabled={loading}
+          disabled={isSearching}
           className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
         >
-          {loading ? 'Searching...' : 'Search User'}
+          {isSearching ? 'Searching...' : 'Search User'}
         </button>
       </form>
 
@@ -84,10 +90,10 @@ const SendFriendRequest = () => {
           </div>
           <button
             onClick={handleSendRequest}
-            disabled={loading}
+            disabled={isSending}
             className="mt-4 w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50"
           >
-            Send Friend Request
+            {isSending ? 'Sending...' : 'Send Friend Request'}
           </button>
         </div>
       )}

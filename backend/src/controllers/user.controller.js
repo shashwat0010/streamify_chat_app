@@ -150,7 +150,26 @@ export async function getOutgoingFriendReqs(req, res) {
 
     res.status(200).json(outgoingRequests);
   } catch (error) {
-    console.log("Error in getOutgoingFriendReqs controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+export async function updateProfile(req, res) {
+  try {
+    const allowedFields = ["fullName", "nativeLanguage", "learningLanguage"];  // Removed profilePic mostly because it handles file upload usually separately, sticking to text fields for now as per user request "edit profile" usually means details.
+    const updates = {};
+
+    Object.keys(req.body).forEach((key) => {
+      if (allowedFields.includes(key)) {
+        updates[key] = req.body[key];
+      }
+    });
+
+    const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true }).select("-password");
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error in updateProfile controller", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }

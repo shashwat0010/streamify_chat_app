@@ -44,11 +44,19 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/friends", friendRoutes);
 app.use("/api/meetings", meetingRoutes);
 
+console.log("Environment:", process.env.NODE_ENV);
+const frontendDist = path.join(__dirname, "frontend", "dist");
+console.log("Serving static files from:", frontendDist);
+
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "frontend", "dist")));
+  app.use(express.static(frontendDist));
 
   app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
+    res.sendFile(path.join(frontendDist, "index.html"));
+  });
+} else {
+  app.get("/", (req, res) => {
+    res.send("API is running successfully. <br> If you see this in production, set NODE_ENV=production in your environment variables.");
   });
 }
 

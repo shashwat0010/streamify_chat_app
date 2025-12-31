@@ -26,7 +26,7 @@ const __dirname = path.resolve();
 app.use(
   cors({
     origin: process.env.NODE_ENV === "production"
-      ? ["https://streamify-frontend-8k08.onrender.com"]
+      ? [process.env.CLIENT_URL, "https://streamify-frontend-8k08.onrender.com"]
       : ["http://localhost:5173", "http://127.0.0.1:5173"],
     credentials: true, // allow frontend to send cookies
   })

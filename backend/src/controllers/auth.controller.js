@@ -55,7 +55,11 @@ export async function signup(req, res) {
 
     // Send verification email
     const { sendVerificationEmail } = await import("../lib/email.js");
-    await sendVerificationEmail(newUser.email, verificationToken);
+    const emailSent = await sendVerificationEmail(newUser.email, verificationToken);
+
+    if (!emailSent) {
+      console.log(`[Urgent] Email failed to send. Here is the verification code for ${newUser.email}: ${verificationToken}`);
+    }
 
     res.status(201).json({
       success: true,

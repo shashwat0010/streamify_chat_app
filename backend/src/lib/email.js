@@ -19,6 +19,9 @@ export const sendVerificationEmail = async (email, verificationToken) => {
                     user: process.env.SMTP_USER,
                     pass: process.env.SMTP_PASS.replace(/\s+/g, ''), // Remove spaces if present
                 },
+                connectionTimeout: 10000, // 10 seconds
+                greetingTimeout: 10000, // 10 seconds
+                socketTimeout: 10000, // 10 seconds
             });
         } else {
             // Fallback to Ethereal Email for development (no real email sent, just a preview link)

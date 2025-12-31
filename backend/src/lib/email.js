@@ -6,13 +6,18 @@ export const sendVerificationEmail = async (email, verificationToken) => {
 
         // Use environment variables if provided
         if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+            const port = parseInt(process.env.SMTP_PORT || "587");
+            const secure = port === 465; // true for 465, false for other ports
+
+            console.log(`Configuring SMTP with Host: ${process.env.SMTP_HOST}, Port: ${port}, Secure: ${secure}, User: ${process.env.SMTP_USER}`);
+
             transporter = nodemailer.createTransport({
                 host: process.env.SMTP_HOST,
-                port: process.env.SMTP_PORT || 587,
-                secure: false, // true for 465, false for other ports
+                port: port,
+                secure: secure,
                 auth: {
                     user: process.env.SMTP_USER,
-                    pass: process.env.SMTP_PASS,
+                    pass: process.env.SMTP_PASS.replace(/\s+/g, ''), // Remove spaces if present
                 },
             });
         } else {

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import useFriendStore from '../store/friendStore';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import Avatar from './Avatar';
 
 const SendFriendRequest = () => {
   const [email, setEmail] = useState('');
@@ -78,11 +79,12 @@ const SendFriendRequest = () => {
       {searchResult && (
         <div className="mt-4 p-4 bg-gray-50 rounded-lg">
           <div className="flex items-center space-x-4">
-            <img
-              src={searchResult.profilePic || '/default-avatar.png'}
-              alt={searchResult.fullName}
-              className="w-12 h-12 rounded-full"
-            />
+            <div className="w-12 h-12">
+              <Avatar
+                src={searchResult.profilePic || '/default-avatar.png'}
+                alt={searchResult.fullName}
+              />
+            </div>
             <div>
               <h3 className="font-medium">{searchResult.fullName}</h3>
               <p className="text-sm text-gray-500">{searchResult.email}</p>

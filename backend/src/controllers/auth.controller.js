@@ -26,7 +26,9 @@ export async function signup(req, res) {
     }
 
     const idx = Math.floor(Math.random() * 100) + 1; // generate a num between 1-100
-    const randomAvatar = `https://avatar.iran.liara.run/public/${idx}.png`;
+    // const randomAvatar = `https://avatar.iran.liara.run/public/${idx}.png`;
+    // const randomAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`;
+    const randomAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fullName)}`;
 
     // Generate 6-digit verification code
     const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
@@ -129,6 +131,13 @@ export async function login(req, res) {
 
     if (!user.isVerified) {
       return res.status(403).json({ message: "Email not verified. Please check your email for the verification code." });
+    }
+
+    // Lazy migration for legacy avatars
+    if (user.profilePic && (user.profilePic.includes("avatar.iran.liara.run") || user.profilePic.includes("ui-avatars.com"))) {
+      user.profilePic = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.fullName)}`;
+      await user.save();
+      console.log(`Migrated legacy avatar for user: ${user.email}`);
     }
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, {

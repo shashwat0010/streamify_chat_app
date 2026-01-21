@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import useFriendStore from '../store/friendStore';
+import Avatar from './Avatar';
 
 const Friends = () => {
   const {
@@ -39,11 +40,12 @@ const Friends = () => {
             {friendRequests.map((request) => (
               <div key={request._id} className="flex items-center justify-between bg-gray-100 p-4 rounded-lg">
                 <div className="flex items-center space-x-4">
-                  <img
-                    src={request.sender.profilePic || '/default-avatar.png'}
-                    alt={request.sender.fullName}
-                    className="w-12 h-12 rounded-full"
-                  />
+                  <div className="w-12 h-12">
+                    <Avatar
+                      src={request.sender.profilePic || '/default-avatar.png'}
+                      alt={request.sender.fullName}
+                    />
+                  </div>
                   <div>
                     <h3 className="font-medium">{request.sender.fullName}</h3>
                   </div>
@@ -72,11 +74,12 @@ const Friends = () => {
               <div key={friend._id} className="bg-white p-4 rounded-lg shadow">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <img
-                      src={friend.profilePic || '/default-avatar.png'}
-                      alt={friend.fullName}
-                      className="w-16 h-16 rounded-full"
-                    />
+                    <div className="w-16 h-16">
+                      <Avatar
+                        src={friend.profilePic || '/default-avatar.png'}
+                        alt={friend.fullName}
+                      />
+                    </div>
                     <div>
                       <h3 className="font-medium">{friend.fullName}</h3>
                     </div>

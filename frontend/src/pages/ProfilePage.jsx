@@ -4,6 +4,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateProfile } from "../lib/api";
+import Avatar from "../components/Avatar";
 
 const ProfilePage = () => {
     const { authUser } = useAuthUser();
@@ -44,7 +45,7 @@ const ProfilePage = () => {
                                 {/* Avatar */}
                                 <div className="avatar">
                                     <div className="w-24 sm:w-32 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                                        <img src={authUser.profilePic} alt="Profile" />
+                                        <Avatar src={authUser.profilePic} alt="Profile" />
                                     </div>
                                 </div>
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Avatar from "../components/Avatar";
 import useAuthUser from "../hooks/useAuthUser";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -38,8 +39,8 @@ const OnboardingPage = () => {
   };
 
   const handleRandomAvatar = () => {
-    const idx = Math.floor(Math.random() * 100) + 1; // 1-100 included
-    const randomAvatar = `https://avatar.iran.liara.run/public/${idx}.png`;
+    // const idx = Math.floor(Math.random() * 100) + 1; // 1-100 included
+    const randomAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(formState.fullName || "User")}`;
 
     setFormState({ ...formState, profilePic: randomAvatar });
     toast.success("Random profile picture generated!");
@@ -57,10 +58,9 @@ const OnboardingPage = () => {
               {/* IMAGE PREVIEW */}
               <div className="size-32 rounded-full bg-base-300 overflow-hidden">
                 {formState.profilePic ? (
-                  <img
+                  <Avatar
                     src={formState.profilePic}
                     alt="Profile Preview"
-                    className="w-full h-full object-cover"
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full">

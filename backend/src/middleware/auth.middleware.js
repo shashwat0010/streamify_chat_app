@@ -23,6 +23,13 @@ export const protectRoute = async (req, res, next) => {
 
     req.user = user;
 
+    // Lazy migration for legacy avatars
+    if (user.profilePic && (user.profilePic.includes("avatar.iran.liara.run") || user.profilePic.includes("ui-avatars.com"))) {
+      user.profilePic = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.fullName)}`;
+      await user.save();
+      console.log(`Migrated legacy avatar for user: ${user.email}`);
+    }
+
     next();
   } catch (error) {
     console.log("Error in protectRoute middleware", error);

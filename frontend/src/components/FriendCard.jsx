@@ -4,6 +4,7 @@ import { UserMinusIcon } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { removeFriend } from "../lib/api";
 import toast from "react-hot-toast";
+import Avatar from "./Avatar";
 
 const FriendCard = ({ friend }) => {
   const queryClient = useQueryClient();
@@ -25,7 +26,7 @@ const FriendCard = ({ friend }) => {
         {/* USER INFO */}
         <div className="flex items-center gap-3 mb-3">
           <div className="avatar size-12">
-            <img src={friend.profilePic} alt={friend.fullName} />
+            <Avatar src={friend.profilePic} alt={friend.fullName} />
           </div>
           <h3 className="font-semibold truncate">{friend.fullName}</h3>
         </div>
@@ -45,8 +46,8 @@ const FriendCard = ({ friend }) => {
           <Link to={`/chat/${friend._id}`} className="btn btn-outline flex-1">
             Message
           </Link>
-          <button 
-            className="btn btn-ghost btn-square" 
+          <button
+            className="btn btn-ghost btn-square"
             onClick={() => removeFriendMutation(friend._id)}
             disabled={isPending}
           >

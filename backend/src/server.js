@@ -2,7 +2,6 @@ import express from "express";
 import dotenv from "dotenv";
 dotenv.config({ path: "./.env" }); // Explicit path for local dev
 console.log("Mongo URI loaded:", !!process.env.MONGO_URI); // Debug log
-console.log("Redis URL loaded:", !!process.env.REDIS_URL); // Debug log
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
@@ -16,7 +15,6 @@ import meetingRoutes from "./routes/meeting.route.js";
 
 import { connectDB } from "./lib/db.js";
 import { initSocket } from "./lib/socket.js";
-import { connectRedis } from "./lib/redis.js";
 
 const app = express();
 const PORT = process.env.PORT;
@@ -63,5 +61,4 @@ if (process.env.NODE_ENV === "production") {
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   connectDB();
-  connectRedis();
 });

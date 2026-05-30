@@ -1,193 +1,87 @@
 import { upsertStreamUser } from "../lib/stream.js";
 import User from "../models/User.js";
-import jwt from "jsonwebtoken";
+import { createClerkClient } from "@clerk/clerk-sdk-node";
 
-export async function signup(req, res) {
-  const { email, password, fullName } = req.body;
+const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
 
+export async function getMe(req, res) {
   try {
-    if (!email || !password || !fullName) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
+    // req.auth is populated by ClerkExpressRequireAuth
+    const clerkUserId = req.auth.userId;
 
-    if (password.length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters" });
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: "Invalid email format" });
-    }
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "Email already exists, please use a diffrent one" });
-    }
-
-    const idx = Math.floor(Math.random() * 100) + 1; // generate a num between 1-100
-    // const randomAvatar = `https://avatar.iran.liara.run/public/${idx}.png`;
-    // const randomAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random`;
-    const randomAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fullName)}`;
-
-    // Generate 6-digit verification code
-    const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
-    const verificationTokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
-    const newUser = await User.create({
-      email,
-      fullName,
-      password,
-      profilePic: randomAvatar,
-      verificationToken,
-      verificationTokenExpiresAt,
-      isVerified: false,
-    });
-
-    try {
-      await upsertStreamUser({
-        id: newUser._id.toString(),
-        name: newUser.fullName,
-        image: newUser.profilePic || "",
-      });
-      console.log(`Stream user created for ${newUser.fullName}`);
-    } catch (error) {
-      console.log("Error creating Stream user:", error);
-    }
-
-    // Send verification email
-    const { sendVerificationEmail } = await import("../lib/email.js");
-    const emailSent = await sendVerificationEmail(newUser.email, verificationToken);
-
-    if (!emailSent) {
-      console.log(`[Urgent] Email failed to send. Here is the verification code for ${newUser.email}: ${verificationToken}`);
-    }
-
-    res.status(201).json({
-      success: true,
-      message: "User created. Please verify your email.",
-      userId: newUser._id
-    });
-
-  } catch (error) {
-    console.log("Error in signup controller", error);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-}
-
-export async function verifyEmail(req, res) {
-  try {
-    const { code } = req.body;
-
-    if (!code) return res.status(400).json({ message: "Verification code is required" });
-
-    const user = await User.findOne({
-      verificationToken: code,
-      verificationTokenExpiresAt: { $gt: Date.now() }
-    });
+    // First try to find by clerkId
+    let user = await User.findOne({ clerkId: clerkUserId });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid or expired verification code" });
-    }
-
-    user.isVerified = true;
-    user.verificationToken = undefined;
-    user.verificationTokenExpiresAt = undefined;
-    await user.save();
-
-    // Now generate token and log them in
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, {
-      expiresIn: "7d",
-    });
-
-    res.cookie("jwt", token, {
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      httpOnly: true, // prevent XSS attacks,
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict", // required for cross-site cookies
-      secure: process.env.NODE_ENV === "production",
-    });
-
-    res.status(200).json({ success: true, user, message: "Email verified successfully" });
-
-  } catch (error) {
-    console.log("Error in verifyEmail controller", error);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-}
-
-export async function login(req, res) {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
-    const user = await User.findOne({ email });
-    if (!user) return res.status(401).json({ message: "Invalid email or password" });
-
-    const isPasswordCorrect = await user.matchPassword(password);
-    if (!isPasswordCorrect) return res.status(401).json({ message: "Invalid email or password" });
-
-    if (!user.isVerified) {
-      return res.status(403).json({ message: "Email not verified. Please check your email for the verification code." });
+      // Get the full user info from Clerk to create/sync the user
+      const clerkUser = await clerkClient.users.getUser(clerkUserId);
+      const email = clerkUser.emailAddresses[0].emailAddress;
+      
+      // Check if user exists by email (legacy migration)
+      user = await User.findOne({ email });
+      
+      if (user) {
+        // Link the existing user to the new Clerk ID
+        user.clerkId = clerkUserId;
+        // Verify them automatically since they logged in via Clerk
+        user.isVerified = true;
+        await user.save();
+        console.log(`Migrated legacy user to Clerk: ${email}`);
+      } else {
+        // Create brand new user
+        const fullName = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'User';
+        const profilePic = clerkUser.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fullName)}`;
+        
+        user = await User.create({
+          clerkId: clerkUserId,
+          email,
+          fullName,
+          profilePic,
+          isVerified: true,
+          isOnboarded: false
+        });
+        console.log(`Created new user from Clerk: ${email}`);
+      }
+      
+      // Upsert to Stream Chat
+      try {
+        await upsertStreamUser({
+          id: user._id.toString(),
+          name: user.fullName,
+          image: user.profilePic || "",
+        });
+      } catch (error) {
+        console.log("Error creating Stream user:", error);
+      }
     }
 
     // Lazy migration for legacy avatars
     if (user.profilePic && (user.profilePic.includes("avatar.iran.liara.run") || user.profilePic.includes("ui-avatars.com"))) {
       user.profilePic = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.fullName)}`;
       await user.save();
-      console.log(`Migrated legacy avatar for user: ${user.email}`);
     }
-
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, {
-      expiresIn: "7d",
-    });
-
-    res.cookie("jwt", token, {
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      httpOnly: true, // prevent XSS attacks,
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict", // required for cross-site cookies
-      secure: process.env.NODE_ENV === "production",
-    });
 
     res.status(200).json({ success: true, user });
   } catch (error) {
-    console.log("Error in login controller", error.message);
+    console.error("Error in getMe controller:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
-}
-
-export function logout(req, res) {
-  res.clearCookie("jwt");
-  res.status(200).json({ success: true, message: "Logout successful" });
 }
 
 export async function onboard(req, res) {
   try {
     const userId = req.user._id;
-
     const { fullName, bio, nativeLanguage, learningLanguage, location } = req.body;
 
     if (!fullName || !bio || !nativeLanguage || !learningLanguage || !location) {
       return res.status(400).json({
-        message: "All fields are required",
-        missingFields: [
-          !fullName && "fullName",
-          !bio && "bio",
-          !nativeLanguage && "nativeLanguage",
-          !learningLanguage && "learningLanguage",
-          !location && "location",
-        ].filter(Boolean),
+        message: "All fields are required"
       });
     }
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      {
-        ...req.body,
-        isOnboarded: true,
-      },
+      { ...req.body, isOnboarded: true },
       { new: true }
     );
 
@@ -199,7 +93,6 @@ export async function onboard(req, res) {
         name: updatedUser.fullName,
         image: updatedUser.profilePic || "",
       });
-      console.log(`Stream user updated after onboarding for ${updatedUser.fullName}`);
     } catch (streamError) {
       console.log("Error updating Stream user during onboarding:", streamError.message);
     }

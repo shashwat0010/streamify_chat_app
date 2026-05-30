@@ -9,7 +9,7 @@ export const useSocketContext = () => {
 };
 
 // Assuming backend is on same domain in production, or specific URL in dev
-const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:5001" : "/";
+const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:5001" : (import.meta.env.VITE_BACKEND_URL || "/");
 
 export const SocketContextProvider = ({ children }) => {
     const [socket, setSocket] = useState(null);

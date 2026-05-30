@@ -11,9 +11,11 @@ const useAuthUser = () => {
     queryFn: async () => {
       const token = await getToken();
       if (token) {
+        // Set default for all FUTURE requests in the app
         axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
       }
-      return getAuthUser();
+      // Pass token explicitly to ensure the very first request doesn't miss it
+      return getAuthUser(token);
     },
     enabled: isLoaded && isSignedIn,
     retry: false, 

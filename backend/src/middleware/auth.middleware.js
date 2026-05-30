@@ -1,16 +1,19 @@
-import { ClerkExpressRequireAuth } from '@clerk/clerk-sdk-node';
+import { ClerkExpressWithAuth } from '@clerk/clerk-sdk-node';
 import User from "../models/User.js";
 
-// First, we run Clerk's middleware to verify the Bearer token.
-// Then we run our custom middleware to populate req.user from MongoDB, 
-// because other routes rely on req.user._id, req.user.friends, etc.
-
-export const requireAuth = ClerkExpressRequireAuth();
+// We use ClerkExpressWithAuth instead of RequireAuth to prevent unhandled exceptions
+// and allow us to manually check and log the exact auth state.
+export const requireAuth = ClerkExpressWithAuth();
 
 export const protectRoute = [
   requireAuth,
   async (req, res, next) => {
     try {
+      if (!req.auth || !req.auth.userId) {
+        console.log("Unauthorized request received. Headers:", req.headers.authorization ? "Present" : "Missing");
+        return res.status(401).json({ message: "Unauthorized - No valid Clerk token provided" });
+      }
+
       const clerkUserId = req.auth.userId;
       
       const user = await User.findOne({ clerkId: clerkUserId });

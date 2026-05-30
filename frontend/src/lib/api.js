@@ -19,9 +19,13 @@ export const verifyEmail = async (verificationData) => {
   return response.data;
 };
 
-export const getAuthUser = async () => {
+export const getAuthUser = async (token) => {
   try {
-    const res = await axiosInstance.get("/auth/me");
+    const config = {};
+    if (token) {
+      config.headers = { Authorization: `Bearer ${token}` };
+    }
+    const res = await axiosInstance.get("/auth/me", config);
     return res.data;
   } catch (error) {
     console.log("Error in getAuthUser:", error);

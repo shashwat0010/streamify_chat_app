@@ -10,14 +10,16 @@ It provides an end-to-end communication suite similar to Discord or Zoom, comple
 
 ## 📸 Screenshots
 
-### Login Page
 <p align="center">
-  <img src="./frontend/public/login-screenshot.png" alt="Login Page Screenshot" width="800"/>
+  <img src="./frontend/public/screenshot-1.png" alt="App Screenshot 1" width="800"/>
 </p>
 
-### Meeting History
 <p align="center">
-  <img src="./frontend/public/history-screenshot.png" alt="Meeting History Screenshot" width="800"/>
+  <img src="./frontend/public/screenshot-2.png" alt="App Screenshot 2" width="800"/>
+</p>
+
+<p align="center">
+  <img src="./frontend/public/screenshot-3.png" alt="App Screenshot 3" width="800"/>
 </p>
 
 ---

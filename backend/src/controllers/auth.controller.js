@@ -5,12 +5,14 @@ import { createClerkClient } from "@clerk/clerk-sdk-node";
 const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
 
 export async function getMe(req, res) {
+  console.log("getMe called for clerkId:", req.auth?.userId);
   try {
     // req.auth is populated by ClerkExpressRequireAuth
     const clerkUserId = req.auth.userId;
 
     // First try to find by clerkId
     let user = await User.findOne({ clerkId: clerkUserId });
+    console.log("DB lookup finished, user found:", !!user);
 
     if (!user) {
       // Get the full user info from Clerk to create/sync the user

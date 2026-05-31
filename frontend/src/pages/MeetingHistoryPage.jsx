@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios";
 import React from "react";
 import { format } from "date-fns";
 import { CalendarIcon, PlayCircleIcon, FileTextIcon } from "lucide-react";
@@ -10,7 +10,7 @@ const MeetingHistoryPage = () => {
     const { data: meetings, isLoading, error } = useQuery({
         queryKey: ["meetings"],
         queryFn: async () => {
-            const res = await axios.get("/api/meetings", { withCredentials: true });
+            const res = await axiosInstance.get("/meetings");
             return res.data;
         },
     });

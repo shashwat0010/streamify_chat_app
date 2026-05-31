@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import axios from 'axios';
+import { axiosInstance } from '../lib/axios';
 
 const useFriendStore = create((set) => ({
   friends: [],
@@ -16,7 +16,7 @@ const useFriendStore = create((set) => ({
   getFriends: async () => {
     try {
       set({ isFetchingFriends: true, error: null });
-      const response = await axios.get('/api/friends', { withCredentials: true });
+      const response = await axiosInstance.get('/users/friends');
       set({ friends: response.data, isFetchingFriends: false });
     } catch (error) {
       set({ error: error.response?.data?.message || 'Failed to fetch friends', isFetchingFriends: false });
@@ -27,8 +27,10 @@ const useFriendStore = create((set) => ({
   getFriendRequests: async () => {
     try {
       set({ isFetchingRequests: true, error: null });
-      const response = await axios.get('/api/friends/requests', { withCredentials: true });
-      set({ friendRequests: response.data, isFetchingRequests: false });
+      const response = await axiosInstance.get('/users/friend-requests');
+      // friend-requests returns { incomingReqs, acceptedReqs }. The store expects an array.
+      // Wait, let's map the incomingReqs which are pending to be friendRequests.
+      set({ friendRequests: response.data?.incomingReqs || [], isFetchingRequests: false });
     } catch (error) {
       set({ error: error.response?.data?.message || 'Failed to fetch friend requests', isFetchingRequests: false });
     }
@@ -42,7 +44,7 @@ const useFriendStore = create((set) => ({
   sendFriendRequest: async (recipientId) => {
     try {
       set((state) => ({ processingIds: [...state.processingIds, "send_request"], error: null }));
-      await axios.post('/api/friends/request', { recipientId }, { withCredentials: true });
+      await axiosInstance.post(`/users/friend-request/${recipientId}`);
       set((state) => ({ processingIds: state.processingIds.filter(id => id !== "send_request") }));
     } catch (error) {
       set((state) => ({
@@ -57,13 +59,13 @@ const useFriendStore = create((set) => ({
   acceptFriendRequest: async (requestId) => {
     try {
       set((state) => ({ processingIds: [...state.processingIds, requestId], error: null }));
-      await axios.put(`/api/friends/request/${requestId}/accept`, {}, { withCredentials: true });
+      await axiosInstance.put(`/users/friend-request/${requestId}/accept`);
       set((state) => ({
         friendRequests: state.friendRequests.filter(request => request._id !== requestId),
         processingIds: state.processingIds.filter(id => id !== requestId)
       }));
       // Refresh friends list
-      const response = await axios.get('/api/friends', { withCredentials: true });
+      const response = await axiosInstance.get('/users/friends');
       set({ friends: response.data });
     } catch (error) {
       set((state) => ({
@@ -77,7 +79,7 @@ const useFriendStore = create((set) => ({
   removeFriend: async (friendId) => {
     try {
       set((state) => ({ processingIds: [...state.processingIds, friendId], error: null }));
-      await axios.delete(`/api/friends/${friendId}`, { withCredentials: true });
+      await axiosInstance.delete(`/users/friends/${friendId}`);
       set((state) => ({
         friends: state.friends.filter(friend => friend._id !== friendId),
         processingIds: state.processingIds.filter(id => id !== friendId)

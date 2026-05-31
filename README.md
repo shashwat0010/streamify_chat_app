@@ -8,7 +8,21 @@ It provides an end-to-end communication suite similar to Discord or Zoom, comple
 
 ---
 
-## 🌟 Key Features
+## 📸 Screenshots
+
+### Login Page
+*(Replace this with your actual image by uploading it to GitHub)*
+<p align="center">
+  <img src="https://via.placeholder.com/800x450?text=Login+Page+Screenshot" alt="Login Page Screenshot" width="800"/>
+</p>
+
+### Onboarding Flow
+*(Replace this with your actual image by uploading it to GitHub)*
+<p align="center">
+  <img src="https://via.placeholder.com/800x450?text=Onboarding+Page+Screenshot" alt="Onboarding Page Screenshot" width="800"/>
+</p>
+
+---
 
 * **Real-time Global Chat**: Powered by WebSockets (Socket.io) for instant messaging and real-time online/offline presence tracking.
 * **1-on-1 & Group Video Calls**: High-quality video conferencing powered by [GetStream.io](https://getstream.io/), complete with screen sharing and mute controls.

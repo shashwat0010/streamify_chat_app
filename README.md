@@ -11,15 +11,13 @@ It provides an end-to-end communication suite similar to Discord or Zoom, comple
 ## 📸 Screenshots
 
 ### Login Page
-*(Replace this with your actual image by uploading it to GitHub)*
 <p align="center">
-  <img src="https://via.placeholder.com/800x450?text=Login+Page+Screenshot" alt="Login Page Screenshot" width="800"/>
+  <img src="./frontend/public/login-screenshot.png" alt="Login Page Screenshot" width="800"/>
 </p>
 
-### Onboarding Flow
-*(Replace this with your actual image by uploading it to GitHub)*
+### Meeting History
 <p align="center">
-  <img src="https://via.placeholder.com/800x450?text=Onboarding+Page+Screenshot" alt="Onboarding Page Screenshot" width="800"/>
+  <img src="./frontend/public/history-screenshot.png" alt="Meeting History Screenshot" width="800"/>
 </p>
 
 ---

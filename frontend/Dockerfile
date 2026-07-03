@@ -17,6 +17,9 @@ ENV VITE_STREAM_API_KEY=$VITE_STREAM_API_KEY
 ENV VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY
 ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
 
+# Increase Node heap to prevent OOM on low-RAM servers (t3.micro = 1GB)
+ENV NODE_OPTIONS=--max_old_space_size=1536
+
 RUN npm run build
 
 # Production Stage

@@ -3,7 +3,6 @@ import Community from "../models/Community.js";
 import CommunityMember from "../models/CommunityMember.js";
 import { generateUploadUrl } from "../lib/s3.js";
 import redis from "../lib/redis.js";
-import fs from "fs";
 import path from "path";
 
 // Generate S3 Upload Pre-signed URL or Local Fallback upload link
@@ -22,32 +21,16 @@ export async function getUploadUrl(req, res) {
   }
 }
 
-// Local File Upload Fallback Endpoint (saves file to /uploads directory)
+// Local File Upload Fallback Endpoint (handled via multer - see post.route.js)
+// This is now a no-op placeholder; actual upload is handled by multer middleware
 export async function handleLocalUpload(req, res) {
   try {
-    const { key } = req.query;
-    if (!key) {
-      return res.status(400).json({ message: "Key parameter is required" });
+    if (!req.file) {
+      return res.status(400).json({ message: "No file received" });
     }
-
-    const uploadDir = path.join(path.resolve(), "uploads");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    const filePath = path.join(uploadDir, key);
-    const writeStream = fs.createWriteStream(filePath);
-
-    req.pipe(writeStream);
-
-    writeStream.on("finish", () => {
-      res.status(200).json({ success: true, message: "Uploaded locally successfully" });
-    });
-
-    writeStream.on("error", (err) => {
-      console.error("Write stream error:", err);
-      res.status(500).json({ message: "Failed to write file to local disk" });
-    });
+    const serverUrl = process.env.NODE_ENV === "production" ? "" : `http://localhost:${process.env.PORT || 5001}`;
+    const fileUrl = `${serverUrl}/uploads/${req.file.filename}`;
+    res.status(200).json({ success: true, fileUrl });
   } catch (error) {
     console.error("Error in handleLocalUpload:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -57,7 +40,7 @@ export async function handleLocalUpload(req, res) {
 // Create a new post in a community
 export async function createPost(req, res) {
   try {
-    const { title, content, media, communityId } = req.body;
+    const { title, content, communityId } = req.body;
     const userId = req.user.id;
 
     if (!title || !communityId) {
@@ -75,10 +58,24 @@ export async function createPost(req, res) {
       return res.status(403).json({ message: "You must join this private community to post" });
     }
 
+    // Handle media: either from uploaded file (multer) or from pre-uploaded URL (S3 flow)
+    let mediaData = [];
+
+    if (req.file) {
+      // Local multer upload
+      const serverUrl = process.env.NODE_ENV === "production" ? "" : `http://localhost:${process.env.PORT || 5001}`;
+      const fileUrl = `${serverUrl}/uploads/${req.file.filename}`;
+      const mediaType = req.file.mimetype.startsWith("video/") ? "video" : "image";
+      mediaData = [{ url: fileUrl, type: mediaType }];
+    } else if (req.body.mediaUrl && req.body.mediaType) {
+      // Pre-uploaded (S3 flow)
+      mediaData = [{ url: req.body.mediaUrl, type: req.body.mediaType }];
+    }
+
     const post = await Post.create({
       title,
       content: content || "",
-      media: media || [],
+      media: mediaData,
       author: userId,
       community: communityId,
       score: Date.now() / 1000, // Initial Reddit-like score based on timestamp

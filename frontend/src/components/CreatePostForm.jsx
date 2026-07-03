@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { getUploadUrl, uploadFileToUrl, createPost } from "../lib/api";
+import { axiosInstance } from "../lib/axios";
 import { ImageIcon, VideoIcon, XIcon } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -16,7 +16,12 @@ const CreatePostForm = ({ communityId, communityName }) => {
   const [isUploading, setIsUploading] = useState(false);
 
   const createPostMutation = useMutation({
-    mutationFn: createPost,
+    mutationFn: async (formData) => {
+      const response = await axiosInstance.post("/posts", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return response.data;
+    },
     onSuccess: () => {
       toast.success("Post created successfully!");
       setTitle("");
@@ -25,6 +30,7 @@ const CreatePostForm = ({ communityId, communityName }) => {
       setMediaPreview(null);
       setMediaType("");
       queryClient.invalidateQueries({ queryKey: ["communityPosts", communityName] });
+      queryClient.invalidateQueries({ queryKey: ["feedPosts"] });
     },
     onError: (err) => {
       toast.error(err.response?.data?.message || "Failed to create post");
@@ -61,35 +67,21 @@ const CreatePostForm = ({ communityId, communityName }) => {
     e.preventDefault();
     if (!title.trim()) return toast.error("Post title is required");
 
-    let mediaData = [];
-
     try {
       setIsUploading(true);
 
+      // Use multipart/form-data — multer handles file storage on the backend
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("content", content);
+      formData.append("communityId", communityId);
       if (mediaFile) {
-        // Step 1: Get pre-signed URL (or local mock url)
-        const { uploadUrl, fileUrl } = await getUploadUrl(mediaFile.name, mediaFile.type);
-
-        // Step 2: Upload directly to S3 / local server
-        await uploadFileToUrl(uploadUrl, mediaFile, mediaFile.type);
-
-        mediaData = [
-          {
-            url: fileUrl,
-            type: mediaType,
-          },
-        ];
+        formData.append("media", mediaFile);
       }
 
-      // Step 3: Create the post document in DB
-      await createPostMutation.mutateAsync({
-        title,
-        content,
-        media: mediaData,
-        communityId,
-      });
+      await createPostMutation.mutateAsync(formData);
     } catch (error) {
-      console.error("Upload/Post Error:", error);
+      console.error("Post Error:", error);
       toast.error(error.message || "An error occurred while creating post");
     } finally {
       setIsUploading(false);
@@ -168,13 +160,11 @@ const CreatePostForm = ({ communityId, communityName }) => {
               className="btn btn-primary btn-sm rounded-xl px-5"
               disabled={isUploading || createPostMutation.isPending || !title.trim()}
             >
-              {isUploading ? (
+              {isUploading || createPostMutation.isPending ? (
                 <>
                   <span className="loading loading-spinner loading-xs" />
-                  Uploading...
+                  Posting...
                 </>
-              ) : createPostMutation.isPending ? (
-                "Posting..."
               ) : (
                 "Post"
               )}

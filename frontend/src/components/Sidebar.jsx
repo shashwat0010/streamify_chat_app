@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router";
 import useAuthUser from "../hooks/useAuthUser";
 import { useQuery } from "@tanstack/react-query";
 import { getJoinedCommunities } from "../lib/api";
-import { BellIcon, HomeIcon, ShipWheelIcon, UsersIcon, HistoryIcon, CompassIcon, BookmarkIcon } from "lucide-react";
+import { BellIcon, HomeIcon, ShipWheelIcon, UsersIcon, HistoryIcon, CompassIcon, BookmarkIcon, PenSquareIcon } from "lucide-react";
 import Avatar from "./Avatar";
 
 const Sidebar = () => {
@@ -31,6 +31,14 @@ const Sidebar = () => {
       </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-14rem)]">
+        <Link
+          to="/communities"
+          className="btn btn-primary justify-start w-full gap-3 px-3 normal-case rounded-xl mb-2"
+        >
+          <PenSquareIcon className="size-5" />
+          <span>Create Post</span>
+        </Link>
+
         <Link
           to="/"
           className={`btn btn-ghost justify-start w-full gap-3 px-3 normal-case ${currentPath === "/" ? "btn-active" : ""

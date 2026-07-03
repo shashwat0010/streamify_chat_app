@@ -16,10 +16,8 @@ const CreatePostForm = ({ communityId, communityName }) => {
   const [isUploading, setIsUploading] = useState(false);
 
   const createPostMutation = useMutation({
-    mutationFn: async (formData) => {
-      const response = await axiosInstance.post("/posts", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+    mutationFn: async (payload) => {
+      const response = await axiosInstance.post("/posts", payload);
       return response.data;
     },
     onSuccess: () => {
@@ -70,19 +68,45 @@ const CreatePostForm = ({ communityId, communityName }) => {
     try {
       setIsUploading(true);
 
-      // Use multipart/form-data — multer handles file storage on the backend
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("content", content);
-      formData.append("communityId", communityId);
+      let finalMediaUrl = "";
+      let finalMediaType = "";
+
       if (mediaFile) {
-        formData.append("media", mediaFile);
+        // 1. Get pre-signed upload URL from backend
+        const urlRes = await axiosInstance.get(`/posts/upload-url?fileName=${encodeURIComponent(mediaFile.name)}&fileType=${encodeURIComponent(mediaFile.type)}`);
+        const { uploadUrl, fileUrl } = urlRes.data;
+
+        // 2. Upload file directly to S3
+        const uploadRes = await fetch(uploadUrl, {
+          method: "PUT",
+          body: mediaFile,
+          headers: {
+            "Content-Type": mediaFile.type,
+          },
+        });
+
+        if (!uploadRes.ok) throw new Error("Failed to upload image to S3");
+
+        finalMediaUrl = fileUrl;
+        finalMediaType = mediaType;
       }
 
-      await createPostMutation.mutateAsync(formData);
+      // 3. Create post with JSON payload
+      const payload = {
+        title,
+        content,
+        communityId,
+      };
+
+      if (finalMediaUrl) {
+        payload.mediaUrl = finalMediaUrl;
+        payload.mediaType = finalMediaType;
+      }
+
+      await createPostMutation.mutateAsync(payload);
     } catch (error) {
       console.error("Post Error:", error);
-      toast.error(error.message || "An error occurred while creating post");
+      toast.error(error.response?.data?.message || error.message || "An error occurred while creating post");
     } finally {
       setIsUploading(false);
     }

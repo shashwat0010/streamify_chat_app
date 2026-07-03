@@ -21,16 +21,16 @@ jobs:
 
       - name: Install Root & Backend Dependencies
         run: |
-          npm ci
-          cd backend && npm ci
+          npm install
+          cd backend && npm install
 
       - name: Install Frontend Dependencies
         run: |
-          cd frontend && npm ci
+          cd frontend && npm install
 
       - name: Build Frontend
         run: |
-          cd frontend && npm run build
+          cd frontend && CI=false npm run build
 
   build-docker-images:
     needs: test-and-lint

@@ -24,6 +24,14 @@ It provides an end-to-end communication suite similar to Discord or Zoom, comple
   <img src="./frontend/public/screenshot-3.png" alt="App Screenshot 3" width="800"/>
 </p>
 
+<p align="center">
+  <img src="./frontend/public/screenshot-4.png" alt="App Screenshot 4" width="800"/>
+</p>
+
+<p align="center">
+  <img src="./frontend/public/screenshot-5.png" alt="App Screenshot 5" width="800"/>
+</p>
+
 ---
 
 * **Real-time Global Chat**: Powered by WebSockets (Socket.io) for instant messaging and real-time online/offline presence tracking.

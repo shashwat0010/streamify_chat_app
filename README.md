@@ -2,6 +2,8 @@
 
 Streamify is a full-stack, modern, and highly scalable communication platform built to seamlessly handle real-time messaging, video calls, and user networking. 
 
+**🔴 Live Demo: [https://streamify-chat.duckdns.org/](https://streamify-chat.duckdns.org/)**
+
 It provides an end-to-end communication suite similar to Discord or Zoom, complete with friend requests, global presence tracking, robust authentication, and meeting recordings.
 
 ![Streamify App](https://img.shields.io/badge/Status-Active-success)
@@ -111,20 +113,58 @@ Visit `http://localhost:5173` in your browser!
 
 ---
 
-## 🌍 Deployment
+## 🏛️ Architecture
 
-**Frontend (Vercel)**
-1. Connect your GitHub repository to Vercel.
-2. Set the Root Directory to `frontend`.
-3. Add your `VITE_` environment variables.
-4. Deploy! (Note: The `vercel.json` file is already configured to handle React Router SPA routing).
+```mermaid
+graph TD
+    Client[Client Browser]
+    
+    subgraph AWS EC2 Instance
+        Nginx[Nginx Reverse Proxy]
+        Frontend[React Vite Frontend Container]
+        Backend[Node.js Express Backend Container]
+        Redis[Redis Cache Container]
+    end
+    
+    subgraph External Services
+        MongoDB[(MongoDB Atlas)]
+        S3[(AWS S3 Bucket)]
+        Clerk[Clerk Auth]
+        Stream[GetStream.io Video/Chat]
+    end
 
-**Backend (Render)**
-1. Connect your repository to Render as a Web Service.
-2. Set the Root Directory to `backend`.
-3. Set the build command to `npm install` and start command to `node src/server.js`.
-4. Add your environment variables (Make sure `CLIENT_URL` is set to your live Vercel domain to allow CORS).
-5. Deploy!
+    Client -->|HTTPS| Nginx
+    Nginx -->|Route /| Frontend
+    Nginx -->|Route /api & /socket.io| Backend
+    
+    Backend <-->|Cache & Pub/Sub| Redis
+    Backend <-->|Read/Write| MongoDB
+    Backend <-->|Upload Media| S3
+    Backend <-->|Verify Tokens| Clerk
+    Backend <-->|Webhooks & Tokens| Stream
+    
+    Frontend <-->|Auth Flows| Clerk
+    Frontend <-->|WebRTC/Sockets| Stream
+    Frontend -->|Direct Upload| S3
+```
+
+---
+
+## 🌍 Deployment (AWS EC2 & Docker)
+
+This project uses a fully automated CI/CD pipeline with GitHub Actions.
+
+1. **GitHub Actions**: On every push to the `main` branch, the pipeline builds the Docker images.
+2. **AWS EC2**: The pipeline SSHs into the EC2 instance and triggers `docker-compose up --build -d` to spin up the latest containers.
+3. **Nginx & Let's Encrypt**: An Nginx container routes traffic and serves SSL certificates.
+
+### Required Secrets for CI/CD
+To deploy this project to your own EC2 instance, configure the following GitHub Secrets:
+* `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_S3_BUCKET_NAME`
+* `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`, `VITE_CLERK_PUBLISHABLE_KEY`
+* `STREAM_API_KEY`, `STREAM_API_SECRET`, `VITE_STREAM_API_KEY`
+* `MONGO_URI`, `JWT_SECRET_KEY`
+* `EC2_HOST`, `EC2_SSH_KEY`
 
 ---
 

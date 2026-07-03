@@ -13,23 +13,15 @@ It provides an end-to-end communication suite similar to Discord or Zoom, comple
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="./frontend/public/screenshot-1.png" alt="App Screenshot 1" width="800"/>
+  <img src="./frontend/public/image.png" alt="App Screenshot 1" width="800"/>
 </p>
 
 <p align="center">
-  <img src="./frontend/public/screenshot-2.png" alt="App Screenshot 2" width="800"/>
+  <img src="./frontend/public/image%20copy%202.png" alt="App Screenshot 2" width="800"/>
 </p>
 
 <p align="center">
-  <img src="./frontend/public/screenshot-3.png" alt="App Screenshot 3" width="800"/>
-</p>
-
-<p align="center">
-  <img src="./frontend/public/screenshot-4.png" alt="App Screenshot 4" width="800"/>
-</p>
-
-<p align="center">
-  <img src="./frontend/public/screenshot-5.png" alt="App Screenshot 5" width="800"/>
+  <img src="./frontend/public/Screenshot%202026-07-03%20195900.png" alt="App Screenshot 3" width="800"/>
 </p>
 
 ---

@@ -58,7 +58,7 @@ It provides an end-to-end communication suite similar to Discord or Zoom, comple
 ## 🚀 Quick Start (Local Development)
 
 ### 1. Prerequisites
-Make sure you have Node.js installed, as well as accounts for [MongoDB](https://www.mongodb.com/), [Clerk](https://clerk.com/), and [GetStream.io](https://getstream.io/).
+Make sure you have Node.js and [Redis](https://redis.io/) installed locally (or via Docker), as well as accounts for [MongoDB](https://www.mongodb.com/), [Clerk](https://clerk.com/), [GetStream.io](https://getstream.io/), and [AWS S3](https://aws.amazon.com/s3/) (for media uploads).
 
 ### 2. Clone the repository
 ```bash
@@ -75,9 +75,11 @@ npm install
 Create a `.env` file in the `backend` directory and add your credentials:
 ```env
 MONGO_URI=your_mongodb_connection_string
+REDIS_URL=redis://localhost:6379
 PORT=5001
 NODE_ENV=development
 CLIENT_URL=http://localhost:5173
+JWT_SECRET_KEY=your_jwt_secret
 
 # Clerk Keys
 CLERK_SECRET_KEY=your_clerk_secret_key
@@ -86,8 +88,14 @@ CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
 # GetStream Keys
 STREAM_API_KEY=your_stream_api_key
 STREAM_API_SECRET=your_stream_api_secret
+
+# AWS S3 (Media Uploads)
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+AWS_REGION=your_aws_region
+AWS_S3_BUCKET_NAME=your_bucket_name
 ```
-Run the backend server:
+Run the backend server (ensure your local Redis server is running first):
 ```bash
 npm run dev
 ```

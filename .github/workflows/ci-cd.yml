@@ -88,8 +88,8 @@ jobs:
             export AWS_REGION="${{ secrets.AWS_REGION }}"
             
             # Restart containers with updated images
-            docker-compose down
-            docker-compose up --build -d
+            docker compose down
+            docker compose up --build -d
             
             # Clean up dangling images to save disk space
             docker image prune -f

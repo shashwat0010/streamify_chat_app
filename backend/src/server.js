@@ -12,6 +12,11 @@ import userRoutes from "./routes/user.route.js";
 import chatRoutes from "./routes/chat.route.js";
 import friendRoutes from "./routes/friend.route.js";
 import meetingRoutes from "./routes/meeting.route.js";
+import communityRoutes from "./routes/community.route.js";
+import postRoutes from "./routes/post.route.js";
+import commentRoutes from "./routes/comment.route.js";
+import searchRoutes from "./routes/search.route.js";
+import notificationRoutes from "./routes/notification.route.js";
 
 import { connectDB } from "./lib/db.js";
 import { initSocket } from "./lib/socket.js";
@@ -33,6 +38,7 @@ app.use(
 
 app.use(express.json());
 app.use(cookieParser());
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 const server = http.createServer(app);
 initSocket(server);
@@ -42,6 +48,11 @@ app.use("/api/users", userRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/friends", friendRoutes);
 app.use("/api/meetings", meetingRoutes);
+app.use("/api/communities", communityRoutes);
+app.use("/api/posts", postRoutes);
+app.use("/api/comments", commentRoutes);
+app.use("/api/search", searchRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 console.log("Environment:", process.env.NODE_ENV);
   app.get("/", (req, res) => {

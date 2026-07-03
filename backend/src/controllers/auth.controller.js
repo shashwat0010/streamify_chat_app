@@ -1,6 +1,7 @@
 import { upsertStreamUser } from "../lib/stream.js";
 import User from "../models/User.js";
 import { createClerkClient } from "@clerk/clerk-sdk-node";
+import { getRandomAvatar } from "../lib/placeholders.js";
 
 const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
 
@@ -32,7 +33,8 @@ export async function getMe(req, res) {
       } else {
         // Create brand new user
         const fullName = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'User';
-        const profilePic = clerkUser.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fullName)}`;
+        const isDefaultClerk = !clerkUser.imageUrl || clerkUser.imageUrl.includes("default-user") || clerkUser.imageUrl.includes("gravatar.com");
+        const profilePic = isDefaultClerk ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fullName)}` : clerkUser.imageUrl;
         
         user = await User.create({
           clerkId: clerkUserId,
@@ -57,8 +59,8 @@ export async function getMe(req, res) {
       }
     }
 
-    // Lazy migration for legacy avatars
-    if (user.profilePic && (user.profilePic.includes("avatar.iran.liara.run") || user.profilePic.includes("ui-avatars.com"))) {
+    // Lazy migration for legacy avatars to dicebear ones
+    if (user.profilePic && (user.profilePic.includes("avatar.iran.liara.run") || user.profilePic.includes("ui-avatars.com") || user.profilePic.includes("images.unsplash.com"))) {
       user.profilePic = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.fullName)}`;
       await user.save();
     }

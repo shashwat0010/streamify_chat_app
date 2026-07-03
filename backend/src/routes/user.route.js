@@ -8,6 +8,7 @@ import {
   getRecommendedUsers,
   sendFriendRequest,
   updateProfile,
+  rejectFriendRequest,
 } from "../controllers/user.controller.js";
 import User from "../models/User.js";
 
@@ -23,6 +24,7 @@ router.get("/friends", getMyFriends);
 
 router.post("/friend-request/:id", sendFriendRequest);
 router.put("/friend-request/:id/accept", acceptFriendRequest);
+router.delete("/friend-request/:id/reject", rejectFriendRequest);
 
 router.get("/friend-requests", getFriendRequests);
 router.get("/outgoing-friend-requests", getOutgoingFriendReqs);
@@ -31,7 +33,13 @@ router.get("/outgoing-friend-requests", getOutgoingFriendReqs);
 router.get("/search", async (req, res) => {
   try {
     const { email } = req.query;
-    const user = await User.findOne({ email }).select("-password");
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+    const cleanEmail = email.trim();
+    const user = await User.findOne({
+      email: { $regex: new RegExp("^" + cleanEmail + "$", "i") },
+    }).select("-password");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });

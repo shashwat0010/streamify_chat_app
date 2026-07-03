@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: streamify
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: streamify-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5001
+          env:
+            - name: PORT
+              value: "5001"
+            - name: NODE_ENV
+              value: "production"
+            - name: MONGO_URI
+              value: "mongodb://mongodb:27017/streamify"
+            - name: REDIS_URL
+              value: "redis://redis:6379"
+            - name: CLIENT_URL
+              value: "http://streamify-frontend"
+            # These secrets would ideally be sourced from K8s Secrets, configured here as placeholder refs
+            - name: JWT_SECRET_KEY
+              value: "prod_k8s_secret_jwt_key_streamify"
+            - name: STREAM_API_KEY
+              value: "zwea8dda3prb"
+            - name: STREAM_API_SECRET
+              value: "xg8qqqy266hbg6jdawfvhtf3nbctezwmd4rc8fdhxmbbsxywnqqnvc64erfpfns4"
+            - name: CLERK_SECRET_KEY
+              value: "sk_test_ijV6Nj9jO6HsJRYweXa6tF659ePpazHz3QxhQv6Ogl"
+            - name: CLERK_PUBLISHABLE_KEY
+              value: "pk_test_d2VsY29tZWQtb3Bvc3N1bS04Ni5jbGVyay5hY2NvdW50cy5kZXYk"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: streamify
+spec:
+  ports:
+    - port: 5001
+      targetPort: 5001
+  selector:
+    app: backend

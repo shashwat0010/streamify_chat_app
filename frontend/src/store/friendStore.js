@@ -79,7 +79,7 @@ const useFriendStore = create((set) => ({
   removeFriend: async (friendId) => {
     try {
       set((state) => ({ processingIds: [...state.processingIds, friendId], error: null }));
-      await axiosInstance.delete(`/users/friends/${friendId}`);
+      await axiosInstance.delete(`/friends/${friendId}`);
       set((state) => ({
         friends: state.friends.filter(friend => friend._id !== friendId),
         processingIds: state.processingIds.filter(id => id !== friendId)

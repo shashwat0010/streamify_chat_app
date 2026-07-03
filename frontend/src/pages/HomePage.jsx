@@ -1,169 +1,288 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  getOutgoingFriendReqs,
+  getFeedPosts,
   getRecommendedUsers,
-  getUserFriends,
+  getOutgoingFriendReqs,
   sendFriendRequest,
+  castVote,
+  toggleBookmark,
+  getUserVotes,
+  getUserBookmarksMap,
+  deletePost
 } from "../lib/api";
 import { Link } from "react-router";
-import { CheckCircleIcon, MapPinIcon, UserPlusIcon, UsersIcon } from "lucide-react";
-
+import { ClockIcon, FlameIcon, StarIcon, MapPinIcon, UserPlusIcon, CheckCircleIcon, SparklesIcon } from "lucide-react";
 import { capitialize } from "../lib/utils";
-
-import FriendCard, { getLanguageFlag } from "../components/FriendCard";
-import NoFriendsFound from "../components/NoFriendsFound";
 import Avatar from "../components/Avatar";
+import PostCard from "../components/PostCard";
+import toast from "react-hot-toast";
 
 const HomePage = () => {
   const queryClient = useQueryClient();
-  const [outgoingRequestsIds, setOutgoingRequestsIds] = useState(new Set());
+  const [sort, setSort] = useState("new");
+  const [page, setPage] = useState(1);
 
-  const { data: friends = [], isLoading: loadingFriends } = useQuery({
-    queryKey: ["friends"],
-    queryFn: getUserFriends,
+  // Fetch feed posts
+  const { data: feedData, isLoading: loadingFeed } = useQuery({
+    queryKey: ["feedPosts", sort, page],
+    queryFn: () => getFeedPosts(sort, page),
   });
 
+  // Fetch user votes map
+  const { data: votesData } = useQuery({
+    queryKey: ["userVotes"],
+    queryFn: getUserVotes,
+  });
+
+  // Fetch user bookmarks map
+  const { data: bookmarksData } = useQuery({
+    queryKey: ["userBookmarks"],
+    queryFn: getUserBookmarksMap,
+  });
+
+  // Fetch recommended users for language learning
   const { data: recommendedUsers = [], isLoading: loadingUsers } = useQuery({
     queryKey: ["users"],
     queryFn: getRecommendedUsers,
   });
 
+  // Fetch outgoing requests
   const { data: outgoingFriendReqs } = useQuery({
     queryKey: ["outgoingFriendReqs"],
     queryFn: getOutgoingFriendReqs,
   });
 
-  const { mutate: sendRequestMutation, isPending } = useMutation({
+  // Mutations
+  const sendRequestMutation = useMutation({
     mutationFn: sendFriendRequest,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["outgoingFriendReqs"] }),
   });
 
-  useEffect(() => {
-    const outgoingIds = new Set();
-    if (outgoingFriendReqs && outgoingFriendReqs.length > 0) {
-      outgoingFriendReqs.forEach((req) => {
-        outgoingIds.add(req.recipient._id);
-      });
-      setOutgoingRequestsIds(outgoingIds);
+  const voteMutation = useMutation({
+    mutationFn: castVote,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feedPosts", sort, page] });
+      queryClient.invalidateQueries({ queryKey: ["userVotes"] });
+    },
+  });
+
+  const bookmarkMutation = useMutation({
+    mutationFn: toggleBookmark,
+    onSuccess: (data) => {
+      toast.success(data.message);
+      queryClient.invalidateQueries({ queryKey: ["userBookmarks"] });
+    },
+  });
+
+  const deletePostMutation = useMutation({
+    mutationFn: deletePost,
+    onSuccess: () => {
+      toast.success("Post deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["feedPosts", sort, page] });
+    },
+  });
+
+  const posts = feedData?.posts || [];
+  const pagination = feedData?.pagination || {};
+  const userVotes = votesData?.votes || {};
+  const userBookmarks = bookmarksData?.bookmarks || {};
+
+  const outgoingRequestsIds = new Set();
+  if (outgoingFriendReqs) {
+    outgoingFriendReqs.forEach((req) => outgoingRequestsIds.add(req.recipient._id));
+  }
+
+  const handleVote = (postId, voteType) => {
+    voteMutation.mutate({
+      targetId: postId,
+      targetType: "Post",
+      voteType,
+    });
+  };
+
+  const handleBookmark = (postId) => {
+    bookmarkMutation.mutate(postId);
+  };
+
+  const handleDelete = (postId) => {
+    if (window.confirm("Are you sure you want to delete this post?")) {
+      deletePostMutation.mutate(postId);
     }
-  }, [outgoingFriendReqs]);
+  };
+
+  const getLanguageFlag = (lang) => {
+    const flags = {
+      english: "🇺🇸", spanish: "🇪🇸", french: "🇫🇷", german: "🇩🇪",
+      chinese: "🇨🇳", japanese: "🇯🇵", korean: "🇰🇷", italian: "🇮🇹"
+    };
+    return flags[lang?.toLowerCase()] || "🌐";
+  };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="container mx-auto space-y-10">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Your Friends</h2>
-          <Link to="/notifications" className="btn btn-outline btn-sm">
-            <UsersIcon className="mr-2 size-4" />
-            Friend Requests
-          </Link>
-        </div>
-
-        {loadingFriends ? (
-          <div className="flex justify-center py-12">
-            <span className="loading loading-spinner loading-lg" />
-          </div>
-        ) : friends.length === 0 ? (
-          <NoFriendsFound />
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {friends.map((friend) => (
-              <FriendCard key={friend._id} friend={friend} />
-            ))}
-          </div>
-        )}
-
-        <section>
-          <div className="mb-6 sm:mb-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Meet New Learners</h2>
-                <p className="opacity-70">
-                  Discover perfect language exchange partners based on your profile
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {loadingUsers ? (
-            <div className="flex justify-center py-12">
-              <span className="loading loading-spinner loading-lg" />
-            </div>
-          ) : recommendedUsers.length === 0 ? (
-            <div className="card bg-base-200 p-6 text-center">
-              <h3 className="font-semibold text-lg mb-2">No recommendations available</h3>
-              <p className="text-base-content opacity-70">
-                Check back later for new language partners!
+    <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-6xl">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left 2 Columns: Feed */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+                Home Feed
+              </h1>
+              <p className="opacity-75 text-sm mt-1">
+                Explore the latest discussions and updates from your joined communities.
               </p>
             </div>
+          </div>
+
+          {/* Sort bar */}
+          <div className="flex items-center gap-2 bg-base-200 p-1.5 rounded-xl border border-base-300">
+            <button
+              onClick={() => { setSort("new"); setPage(1); }}
+              className={`btn btn-sm rounded-lg gap-1 flex-1 sm:flex-initial ${
+                sort === "new" ? "btn-primary text-white" : "btn-ghost"
+              }`}
+            >
+              <ClockIcon className="size-4" />
+              New
+            </button>
+            <button
+              onClick={() => { setSort("hot"); setPage(1); }}
+              className={`btn btn-sm rounded-lg gap-1 flex-1 sm:flex-initial ${
+                sort === "hot" ? "btn-primary text-white" : "btn-ghost"
+              }`}
+            >
+              <FlameIcon className="size-4" />
+              Hot
+            </button>
+            <button
+              onClick={() => { setSort("top"); setPage(1); }}
+              className={`btn btn-sm rounded-lg gap-1 flex-1 sm:flex-initial ${
+                sort === "top" ? "btn-primary text-white" : "btn-ghost"
+              }`}
+            >
+              <StarIcon className="size-4" />
+              Top
+            </button>
+          </div>
+
+          {/* Posts list */}
+          {loadingFeed ? (
+            <div className="flex justify-center py-12">
+              <span className="loading loading-spinner loading-lg text-primary" />
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="card bg-base-200 border border-base-300 p-12 text-center rounded-2xl max-w-lg mx-auto space-y-4">
+              <SparklesIcon className="size-12 text-primary opacity-50 mx-auto" />
+              <h3 className="font-bold text-lg">Your Feed is empty</h3>
+              <p className="text-sm opacity-70">
+                Join some communities or search for topics to populate your feed!
+              </p>
+              <Link to="/communities" className="btn btn-primary btn-sm mx-auto">
+                Explore Communities
+              </Link>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ml-auto max-w-4xl">
-              {recommendedUsers.map((user) => {
-                const hasRequestBeenSent = outgoingRequestsIds.has(user._id);
+            <div className="space-y-4">
+              {posts.map((post) => (
+                <PostCard
+                  key={post._id}
+                  post={post}
+                  onVote={(type) => handleVote(post._id, type)}
+                  onBookmark={handleBookmark}
+                  onDelete={handleDelete}
+                  isBookmarked={!!userBookmarks[post._id]}
+                  userVote={userVotes[post._id] || 0}
+                />
+              ))}
 
-                return (
-                  <div
-                    key={user._id}
-                    className="card bg-base-200 hover:shadow-lg transition-all duration-300"
+              {/* Pagination */}
+              {pagination.totalPages > 1 && (
+                <div className="flex justify-between items-center pt-4">
+                  <button
+                    className="btn btn-outline btn-sm"
+                    disabled={page === 1}
+                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                   >
-                    <div className="card-body p-5 space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="avatar size-16 rounded-full">
-                          <Avatar src={user.profilePic} alt={user.fullName} />
-                        </div>
-
-                        <div>
-                          <h3 className="font-semibold text-lg">{user.fullName}</h3>
-                          {user.location && (
-                            <div className="flex items-center text-xs opacity-70 mt-1">
-                              <MapPinIcon className="size-3 mr-1" />
-                              {user.location}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Languages with flags */}
-                      <div className="flex flex-wrap gap-1.5">
-                        <span className="badge badge-secondary">
-                          {getLanguageFlag(user.nativeLanguage)}
-                          Native: {capitialize(user.nativeLanguage)}
-                        </span>
-                        <span className="badge badge-outline">
-                          {getLanguageFlag(user.learningLanguage)}
-                          Learning: {capitialize(user.learningLanguage)}
-                        </span>
-                      </div>
-
-                      {user.bio && <p className="text-sm opacity-70">{user.bio}</p>}
-
-                      {/* Action button */}
-                      <button
-                        className={`btn w-full mt-2 ${hasRequestBeenSent ? "btn-disabled" : "btn-primary"
-                          } `}
-                        onClick={() => sendRequestMutation(user._id)}
-                        disabled={hasRequestBeenSent || isPending}
-                      >
-                        {hasRequestBeenSent ? (
-                          <>
-                            <CheckCircleIcon className="size-4 mr-2" />
-                            Request Sent
-                          </>
-                        ) : (
-                          <>
-                            <UserPlusIcon className="size-4 mr-2" />
-                            Send Friend Request
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+                    Previous
+                  </button>
+                  <span className="text-xs opacity-70">
+                    Page {page} of {pagination.totalPages}
+                  </span>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    disabled={!pagination.hasMore}
+                    onClick={() => setPage((prev) => prev + 1)}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
           )}
-        </section>
+        </div>
+
+        {/* Right 1 Column: Widgets */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="card bg-base-200 border border-base-300 rounded-2xl">
+            <div className="card-body p-5 space-y-4">
+              <div>
+                <h2 className="font-extrabold text-lg flex items-center gap-2">
+                  <SparklesIcon className="size-5 text-primary" />
+                  Meet New Learners
+                </h2>
+                <p className="text-xs opacity-70 mt-0.5">
+                  Connect with partners matching your learning goals.
+                </p>
+              </div>
+
+              {loadingUsers ? (
+                <div className="flex justify-center py-6">
+                  <span className="loading loading-spinner loading-md text-primary" />
+                </div>
+              ) : recommendedUsers.length === 0 ? (
+                <p className="text-sm opacity-60 text-center py-4">No suggestions available right now.</p>
+              ) : (
+                <div className="space-y-4 pt-2">
+                  {recommendedUsers.slice(0, 4).map((user) => {
+                    const hasRequestBeenSent = outgoingRequestsIds.has(user._id);
+
+                    return (
+                      <div key={user._id} className="flex items-center gap-3 justify-between bg-base-300/30 p-2.5 rounded-xl border border-base-content/5">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="avatar size-9 rounded-full overflow-hidden flex-shrink-0">
+                            <Avatar src={user.profilePic} alt={user.fullName} />
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="font-bold text-sm truncate">{user.fullName}</h4>
+                            <div className="flex items-center gap-1.5 text-xxs opacity-75 mt-0.5">
+                              <span>{getLanguageFlag(user.nativeLanguage)} → {getLanguageFlag(user.learningLanguage)}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          className={`btn btn-circle btn-sm ${
+                            hasRequestBeenSent ? "btn-disabled text-success" : "btn-primary text-white"
+                          }`}
+                          onClick={() => sendRequestMutation.mutate(user._id)}
+                          disabled={hasRequestBeenSent || sendRequestMutation.isPending}
+                          title={hasRequestBeenSent ? "Request Sent" : "Send Friend Request"}
+                        >
+                          {hasRequestBeenSent ? (
+                            <CheckCircleIcon className="size-4" />
+                          ) : (
+                            <UserPlusIcon className="size-4" />
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

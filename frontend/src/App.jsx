@@ -12,6 +12,12 @@ import Friends from "./components/Friends.jsx";
 import SendFriendRequest from "./components/SendFriendRequest.jsx";
 import MeetingHistoryPage from "./pages/MeetingHistoryPage.jsx";
 import ProfilePage from "./pages/ProfilePage.jsx";
+import CommunitiesPage from "./pages/CommunitiesPage.jsx";
+import CreateCommunityPage from "./pages/CreateCommunityPage.jsx";
+import CommunityDetailPage from "./pages/CommunityDetailPage.jsx";
+import BookmarksPage from "./pages/BookmarksPage.jsx";
+import PostDetailPage from "./pages/PostDetailPage.jsx";
+import SearchPage from "./pages/SearchPage.jsx";
 
 import { Toaster } from "react-hot-toast";
 
@@ -78,6 +84,78 @@ const App = () => {
             isAuthenticated && isOnboarded ? (
               <Layout showSidebar={true}>
                 <MeetingHistoryPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+        <Route
+          path="/communities"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <CommunitiesPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+        <Route
+          path="/communities/create"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <CreateCommunityPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+        <Route
+          path="/c/:communityName"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <CommunityDetailPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+        <Route
+          path="/bookmarks"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <BookmarksPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+        <Route
+          path="/posts/:id"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <PostDetailPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+        <Route
+          path="/search"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <SearchPage />
               </Layout>
             ) : (
               <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />

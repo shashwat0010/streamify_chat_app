@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import FriendRequest from "../models/FriendRequest.js";
+import { getIO } from "../lib/socket.js";
 
 export async function getRecommendedUsers(req, res) {
   try {
@@ -62,6 +63,24 @@ export async function sendFriendRequest(req, res) {
     });
 
     if (existingRequest) {
+      if (existingRequest.sender.toString() === recipientId && existingRequest.recipient.toString() === myId && existingRequest.status === "pending") {
+        existingRequest.status = "accepted";
+        await existingRequest.save();
+
+        await User.findByIdAndUpdate(myId, {
+          $addToSet: { friends: recipientId },
+        });
+        await User.findByIdAndUpdate(recipientId, {
+          $addToSet: { friends: myId },
+        });
+
+        return res.status(200).json({
+          message: "You are now friends!",
+          status: "accepted",
+          friendRequest: existingRequest,
+        });
+      }
+
       return res
         .status(400)
         .json({ message: "A friend request already exists between you and this user" });
@@ -80,7 +99,20 @@ export async function sendFriendRequest(req, res) {
       recipient: recipientId,
     });
 
-    res.status(201).json(friendRequest);
+    const populatedRequest = await FriendRequest.findById(friendRequest._id).populate(
+      "sender",
+      "fullName profilePic nativeLanguage learningLanguage"
+    );
+
+    // Emit real-time Socket notification to recipient
+    try {
+      const io = getIO();
+      io.to(recipientId).emit("new-friend-request", populatedRequest);
+    } catch (socketError) {
+      console.log("Socket emit failed for new friend request:", socketError.message);
+    }
+
+    res.status(201).json(populatedRequest);
   } catch (error) {
     console.error("Error in sendFriendRequest controller", error.message);
     res.status(500).json({ message: "Internal Server Error" });
@@ -127,7 +159,7 @@ export async function getFriendRequests(req, res) {
     const incomingReqs = await FriendRequest.find({
       recipient: req.user.id,
       status: "pending",
-    }).populate("sender", "fullName profilePic nativeLanguage learningLanguage");
+    }).populate("sender", "fullName profilePic nativeLanguage learningLanguage email");
 
     const acceptedReqs = await FriendRequest.find({
       sender: req.user.id,
@@ -170,6 +202,32 @@ export async function updateProfile(req, res) {
     res.status(200).json(user);
   } catch (error) {
     console.error("Error in updateProfile controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+export async function rejectFriendRequest(req, res) {
+  try {
+    const { id: requestId } = req.params;
+
+    const friendRequest = await FriendRequest.findById(requestId);
+    if (!friendRequest) {
+      return res.status(404).json({ message: "Friend request not found" });
+    }
+
+    // Verify authorized user (recipient or sender can reject/cancel)
+    if (
+      friendRequest.recipient.toString() !== req.user.id &&
+      friendRequest.sender.toString() !== req.user.id
+    ) {
+      return res.status(403).json({ message: "You are not authorized to handle this request" });
+    }
+
+    await FriendRequest.findByIdAndDelete(requestId);
+
+    res.status(200).json({ message: "Friend request rejected successfully" });
+  } catch (error) {
+    console.error("Error in rejectFriendRequest controller", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }

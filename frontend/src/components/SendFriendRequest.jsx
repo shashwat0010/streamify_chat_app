@@ -1,11 +1,14 @@
-import { useState } from 'react';
-import useFriendStore from '../store/friendStore';
-import axios from 'axios';
-import toast from 'react-hot-toast';
-import Avatar from './Avatar';
+import { useState } from "react";
+import useFriendStore from "../store/friendStore";
+import useAuthUser from "../hooks/useAuthUser";
+import { axiosInstance } from "../lib/axios";
+import toast from "react-hot-toast";
+import Avatar from "./Avatar";
+import { SearchIcon, UserPlusIcon, AlertCircleIcon, CheckIcon, UserIcon } from "lucide-react";
 
 const SendFriendRequest = () => {
-  const [email, setEmail] = useState('');
+  const { authUser } = useAuthUser();
+  const [email, setEmail] = useState("");
   const [searchResult, setSearchResult] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const { sendFriendRequest, processingIds, error } = useFriendStore();
@@ -14,20 +17,21 @@ const SendFriendRequest = () => {
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    if (!email) return;
+    const cleanEmail = email.trim();
+    if (!cleanEmail) return;
 
     setIsSearching(true);
     try {
-      const response = await axios.get(`/api/users/search?email=${email}`, { withCredentials: true });
+      const response = await axiosInstance.get(`/users/search?email=${encodeURIComponent(cleanEmail)}`);
       if (response.data) {
         setSearchResult(response.data);
       } else {
-        toast.error('User not found');
+        toast.error("User not found");
         setSearchResult(null);
       }
     } catch (error) {
-      console.error('Failed to search user:', error);
-      toast.error(error.response?.data?.message || 'User not found');
+      console.error("Failed to search user:", error);
+      toast.error(error.response?.data?.message || "User not found");
       setSearchResult(null);
     } finally {
       setIsSearching(false);
@@ -39,68 +43,108 @@ const SendFriendRequest = () => {
 
     try {
       await sendFriendRequest(searchResult._id);
-      setEmail('');
+      setEmail("");
       setSearchResult(null);
-      toast.success('Friend request sent successfully!');
+      toast.success("Friend request sent successfully!");
     } catch (error) {
-      console.error('Failed to send friend request:', error);
-      toast.error(error.response?.data?.message || 'Failed to send friend request');
+      console.error("Failed to send friend request:", error);
+      toast.error(error.response?.data?.message || "Failed to send friend request");
     }
   };
 
-  return (
-    <div className="p-4 bg-white rounded-lg shadow ml-4 max-w-md">
-      <h2 className="text-xl font-semibold mb-4">Add Friend</h2>
-      <form onSubmit={handleSearch} className="space-y-4">
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-            Friend's Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            placeholder="Enter friend's email"
-            required
-          />
-        </div>
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-        <button
-          type="submit"
-          disabled={isSearching}
-          className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
-        >
-          {isSearching ? 'Searching...' : 'Search User'}
-        </button>
-      </form>
+  const isMe = searchResult?._id === authUser?._id;
+  const isFriend = authUser?.friends?.includes(searchResult?._id);
 
-      {searchResult && (
-        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12">
-              <Avatar
-                src={searchResult.profilePic || '/default-avatar.png'}
-                alt={searchResult.fullName}
-              />
-            </div>
-            <div>
-              <h3 className="font-medium">{searchResult.fullName}</h3>
-              <p className="text-sm text-gray-500">{searchResult.email}</p>
-            </div>
+  return (
+    <div className="card bg-base-200 border border-base-300 rounded-2xl shadow w-full max-w-sm mx-auto">
+      <div className="card-body p-5 space-y-4">
+        <h2 className="card-title text-lg font-bold border-b border-base-300 pb-2">
+          Add Friend
+        </h2>
+        
+        <form onSubmit={handleSearch} className="space-y-4">
+          <div className="form-control w-full">
+            <label htmlFor="email" className="label">
+              <span className="label-text font-semibold text-xs opacity-75">
+                Friend's Email
+              </span>
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="input input-bordered w-full rounded-xl text-sm"
+              placeholder="friend@example.com"
+              required
+            />
           </div>
+
+          {error && (
+            <div className="text-error text-xs flex items-center gap-1.5 opacity-90 mt-1">
+              <AlertCircleIcon className="size-3.5" />
+              <span>{error}</span>
+            </div>
+          )}
+
           <button
-            onClick={handleSendRequest}
-            disabled={isSending}
-            className="mt-4 w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50"
+            type="submit"
+            disabled={isSearching || !email.trim()}
+            className="btn btn-primary btn-sm rounded-xl w-full gap-1.5"
           >
-            {isSending ? 'Sending...' : 'Send Friend Request'}
+            {isSearching ? (
+              <span className="loading loading-spinner loading-xs" />
+            ) : (
+              <SearchIcon className="size-4" />
+            )}
+            Search User
           </button>
-        </div>
-      )}
+        </form>
+
+        {searchResult && (
+          <div className="mt-2 p-3 bg-base-300/40 border border-base-content/5 rounded-xl space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="avatar size-11 rounded-full overflow-hidden flex-shrink-0">
+                <Avatar
+                  src={searchResult.profilePic || "/default-avatar.png"}
+                  alt={searchResult.fullName}
+                />
+              </div>
+              <div className="min-w-0">
+                <h3 className="font-bold text-sm truncate">{searchResult.fullName}</h3>
+                <p className="text-xs opacity-70 truncate">{searchResult.email}</p>
+              </div>
+            </div>
+            
+            {isMe ? (
+              <div className="badge badge-info gap-1 text-white text-xs w-full py-2.5 rounded-xl justify-center font-bold">
+                <UserIcon className="size-3.5" />
+                This is you
+              </div>
+            ) : isFriend ? (
+              <div className="badge badge-success gap-1 text-white text-xs w-full py-2.5 rounded-xl justify-center font-bold">
+                <CheckIcon className="size-3.5" />
+                Already Friends
+              </div>
+            ) : (
+              <button
+                onClick={handleSendRequest}
+                disabled={isSending}
+                className="btn btn-secondary btn-sm w-full rounded-xl gap-1.5 text-white"
+              >
+                {isSending ? (
+                  <span className="loading loading-spinner loading-xs" />
+                ) : (
+                  <UserPlusIcon className="size-4" />
+                )}
+                Send Friend Request
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
-export default SendFriendRequest; 
+export default SendFriendRequest;

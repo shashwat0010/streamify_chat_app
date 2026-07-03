@@ -92,3 +92,169 @@ export async function checkMeetingRecording(meetingId) {
   const response = await axiosInstance.post(`/meetings/${meetingId}/check-recording`);
   return response.data;
 }
+
+// Community API endpoints
+export async function createCommunity(communityData) {
+  const response = await axiosInstance.post("/communities", communityData);
+  return response.data;
+}
+
+export async function updateCommunity(communityId, communityData) {
+  const response = await axiosInstance.put(`/communities/${communityId}`, communityData);
+  return response.data;
+}
+
+export async function deleteCommunity(communityId) {
+  const response = await axiosInstance.delete(`/communities/${communityId}`);
+  return response.data;
+}
+
+export async function getCommunityMembers(communityId) {
+  const response = await axiosInstance.get(`/communities/${communityId}/members`);
+  return response.data;
+}
+
+export async function kickCommunityMember(communityId, targetUserId) {
+  const response = await axiosInstance.delete(`/communities/${communityId}/members/${targetUserId}`);
+  return response.data;
+}
+
+export async function getCommunities(search = "") {
+  const response = await axiosInstance.get(`/communities?search=${encodeURIComponent(search)}`);
+  return response.data;
+}
+
+export async function getJoinedCommunities() {
+  const response = await axiosInstance.get("/communities/joined");
+  return response.data;
+}
+
+export async function getCommunity(nameOrId) {
+  const response = await axiosInstance.get(`/communities/${nameOrId}`);
+  return response.data;
+}
+
+export async function joinCommunity(communityId) {
+  const response = await axiosInstance.post(`/communities/${communityId}/join`);
+  return response.data;
+}
+
+export async function leaveCommunity(communityId) {
+  const response = await axiosInstance.post(`/communities/${communityId}/leave`);
+  return response.data;
+}
+
+export async function updateMemberRole(communityId, targetUserId, role) {
+  const response = await axiosInstance.put(`/communities/${communityId}/members/${targetUserId}/role`, { role });
+  return response.data;
+}
+
+// Post API endpoints
+export async function getUploadUrl(fileName, fileType) {
+  const response = await axiosInstance.get(`/posts/upload-url?fileName=${encodeURIComponent(fileName)}&fileType=${encodeURIComponent(fileType)}`);
+  return response.data;
+}
+
+export async function uploadFileToUrl(uploadUrl, file, fileType) {
+  // Put directly to S3 or Local fallback
+  const response = await fetch(uploadUrl, {
+    method: "PUT",
+    body: file,
+    headers: {
+      "Content-Type": fileType,
+    },
+  });
+  if (!response.ok) {
+    throw new Error("Failed to upload file");
+  }
+  return true;
+}
+
+export async function createPost(postData) {
+  const response = await axiosInstance.post("/posts", postData);
+  return response.data;
+}
+
+export async function getCommunityPosts(communityNameOrId, sort = "new", page = 1) {
+  const response = await axiosInstance.get(`/posts/c/${communityNameOrId}?sort=${sort}&page=${page}`);
+  return response.data;
+}
+
+export async function deletePost(postId) {
+  const response = await axiosInstance.delete(`/posts/${postId}`);
+  return response.data;
+}
+
+export async function getPostDetails(postId) {
+  const response = await axiosInstance.get(`/posts/${postId}`);
+  return response.data;
+}
+
+// Comment & Vote & Bookmark API endpoints
+export async function createComment(commentData) {
+  const response = await axiosInstance.post("/comments", commentData);
+  return response.data;
+}
+
+export async function getPostComments(postId) {
+  const response = await axiosInstance.get(`/comments/post/${postId}`);
+  return response.data;
+}
+
+export async function castVote(voteData) {
+  // voteData: { targetId, targetType, voteType }
+  const response = await axiosInstance.post("/comments/vote", voteData);
+  return response.data;
+}
+
+export async function toggleBookmark(postId) {
+  const response = await axiosInstance.post("/comments/bookmark", { postId });
+  return response.data;
+}
+
+export async function getBookmarks() {
+  const response = await axiosInstance.get("/comments/bookmarks");
+  return response.data;
+}
+
+export async function getUserVotes() {
+  const response = await axiosInstance.get("/comments/user-votes");
+  return response.data;
+}
+
+export async function getUserBookmarksMap() {
+  const response = await axiosInstance.get("/comments/user-bookmarks");
+  return response.data;
+}
+
+// Feed & Search API endpoints
+export async function getFeedPosts(sort = "new", page = 1) {
+  const response = await axiosInstance.get(`/posts?sort=${sort}&page=${page}`);
+  return response.data;
+}
+
+export async function searchAll(query) {
+  const response = await axiosInstance.get(`/search?q=${encodeURIComponent(query)}`);
+  return response.data;
+}
+
+// Notifications API endpoints
+export async function getNotifications() {
+  const response = await axiosInstance.get("/notifications");
+  return response.data;
+}
+
+export async function markNotificationRead(id) {
+  const response = await axiosInstance.put(`/notifications/${id}/read`);
+  return response.data;
+}
+
+export async function markAllNotificationsRead() {
+  const response = await axiosInstance.put("/notifications/read-all");
+  return response.data;
+}
+
+export async function rejectFriendRequest(id) {
+  const response = await axiosInstance.delete(`/users/friend-request/${id}/reject`);
+  return response.data;
+}

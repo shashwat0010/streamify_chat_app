@@ -10,7 +10,7 @@ const useSocket = () => {
     useEffect(() => {
         if (socket) {
             const handleFriendRequest = (requestData) => {
-                toast("New friend request received!", { icon: '👋' });
+                toast("New friend request received!", { icon: '✨' });
                 addFriendRequest(requestData);
             };
 

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getBookmarks, castVote, toggleBookmark, getUserVotes, getUserBookmarksMap, deletePost } from "../lib/api";
+import { getBookmarks, castVote, toggleBookmark, getUserVotes, deletePost } from "../lib/api";
 import { BookmarkIcon, ShieldAlertIcon } from "lucide-react";
 import PostCard from "../components/PostCard";
 import toast from "react-hot-toast";
@@ -19,11 +19,6 @@ const BookmarksPage = () => {
     queryFn: getUserVotes,
   });
 
-  // Fetch user bookmarks map
-  const { data: bookmarksMapData } = useQuery({
-    queryKey: ["userBookmarks"],
-    queryFn: getUserBookmarksMap,
-  });
 
   const voteMutation = useMutation({
     mutationFn: castVote,
@@ -62,7 +57,6 @@ const BookmarksPage = () => {
 
   const posts = bookmarksData?.posts || [];
   const userVotes = votesData?.votes || {};
-  const userBookmarks = bookmarksMapData?.bookmarks || {};
 
   const handleVote = (postId, voteType) => {
     voteMutation.mutate({

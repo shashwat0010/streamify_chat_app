@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createComment, castVote } from "../lib/api";
+import { createComment } from "../lib/api";
 import { ArrowBigUp, ArrowBigDown, Reply, CornerDownRight } from "lucide-react";
 import Avatar from "./Avatar";
 import UserProfileModal from "./UserProfileModal";

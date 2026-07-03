@@ -13,7 +13,7 @@ import {
 } from "../lib/api";
 import { Link } from "react-router";
 import { ClockIcon, FlameIcon, StarIcon, MapPinIcon, UserPlusIcon, CheckCircleIcon, SparklesIcon } from "lucide-react";
-import { capitialize } from "../lib/utils";
+
 import Avatar from "../components/Avatar";
 import PostCard from "../components/PostCard";
 import toast from "react-hot-toast";

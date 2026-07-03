@@ -7,7 +7,7 @@ const Whiteboard = ({ roomId, onClose, isAnnotation = false }) => {
     const socket = useSocketContext();
     const [isDrawing, setIsDrawing] = useState(false);
     const [color, setColor] = useState('#000000');
-    const [lineWidth, setLineWidth] = useState(2);
+    const [lineWidth] = useState(2);
     const [tool, setTool] = useState('pen'); // pen, eraser
 
     useEffect(() => {

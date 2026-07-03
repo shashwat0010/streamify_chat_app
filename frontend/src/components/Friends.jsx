@@ -38,7 +38,7 @@ const Friends = () => {
       toast.success("Friend request declined");
       getFriendRequests();
       setSelectedRequest(null);
-    } catch (err) {
+    } catch {
       toast.error("Failed to decline request");
     } finally {
       setIsRejecting(false);

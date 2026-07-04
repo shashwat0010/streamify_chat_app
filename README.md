@@ -26,6 +26,43 @@ It provides an end-to-end communication suite similar to Discord or Zoom, comple
 
 ---
 
+## 🏛️ Architecture
+
+```mermaid
+graph TD
+    Client[Client Browser]
+    
+    subgraph AWS EC2 Instance
+        Nginx[Nginx Reverse Proxy]
+        Frontend[React Vite Frontend Container]
+        Backend[Node.js Express Backend Container]
+        Redis[Redis Cache Container]
+    end
+    
+    subgraph External Services
+        MongoDB[(MongoDB Atlas)]
+        S3[(AWS S3 Bucket)]
+        Clerk[Clerk Auth]
+        Stream[GetStream.io Video/Chat]
+    end
+
+    Client -->|HTTPS| Nginx
+    Nginx -->|Route /| Frontend
+    Nginx -->|Route /api & /socket.io| Backend
+    
+    Backend <-->|Cache & Pub/Sub| Redis
+    Backend <-->|Read/Write| MongoDB
+    Backend <-->|Upload Media| S3
+    Backend <-->|Verify Tokens| Clerk
+    Backend <-->|Webhooks & Tokens| Stream
+    
+    Frontend <-->|Auth Flows| Clerk
+    Frontend <-->|WebRTC/Sockets| Stream
+    Frontend -->|Direct Upload| S3
+```
+
+---
+
 * **Real-time Global Chat**: Powered by WebSockets (Socket.io) for instant messaging and real-time online/offline presence tracking.
 * **1-on-1 & Group Video Calls**: High-quality video conferencing powered by [GetStream.io](https://getstream.io/), complete with screen sharing and mute controls.
 * **Meeting Recordings & History**: Automatically records video calls and saves meeting summaries and historical data for users to review later.
@@ -49,9 +86,12 @@ It provides an end-to-end communication suite similar to Discord or Zoom, comple
 **Backend**
 * **Node.js** + **Express.js** (REST API)
 * **MongoDB** + **Mongoose** (Database)
+* **Redis** + **ioredis** (Caching & presence tracking)
 * **Socket.io** (WebSocket Server)
 * **Clerk Node SDK** (Authentication Middleware)
 * **GetStream Node SDK** (Token generation & Webhooks)
+* **AWS SDK (S3)** (Direct S3 presigned URL uploads)
+* **Nodemailer** (Email notifications / SMTP)
 
 ---
 
@@ -94,6 +134,12 @@ AWS_ACCESS_KEY_ID=your_aws_access_key
 AWS_SECRET_ACCESS_KEY=your_aws_secret_key
 AWS_REGION=your_aws_region
 AWS_S3_BUCKET_NAME=your_bucket_name
+
+# Nodemailer / SMTP Settings
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_gmail@gmail.com
+SMTP_PASS=your_gmail_app_password
 ```
 Run the backend server (ensure your local Redis server is running first):
 ```bash
@@ -118,43 +164,6 @@ npm run dev
 ```
 
 Visit `http://localhost:5173` in your browser!
-
----
-
-## 🏛️ Architecture
-
-```mermaid
-graph TD
-    Client[Client Browser]
-    
-    subgraph AWS EC2 Instance
-        Nginx[Nginx Reverse Proxy]
-        Frontend[React Vite Frontend Container]
-        Backend[Node.js Express Backend Container]
-        Redis[Redis Cache Container]
-    end
-    
-    subgraph External Services
-        MongoDB[(MongoDB Atlas)]
-        S3[(AWS S3 Bucket)]
-        Clerk[Clerk Auth]
-        Stream[GetStream.io Video/Chat]
-    end
-
-    Client -->|HTTPS| Nginx
-    Nginx -->|Route /| Frontend
-    Nginx -->|Route /api & /socket.io| Backend
-    
-    Backend <-->|Cache & Pub/Sub| Redis
-    Backend <-->|Read/Write| MongoDB
-    Backend <-->|Upload Media| S3
-    Backend <-->|Verify Tokens| Clerk
-    Backend <-->|Webhooks & Tokens| Stream
-    
-    Frontend <-->|Auth Flows| Clerk
-    Frontend <-->|WebRTC/Sockets| Stream
-    Frontend -->|Direct Upload| S3
-```
 
 ---
 

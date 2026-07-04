@@ -71,28 +71,20 @@ export const checkRecording = async (req, res) => {
         const meeting = await Meeting.findById(req.params.id);
         if (!meeting) return res.status(404).json({ message: "Meeting not found" });
 
-        // If we already have a URL, return it
+        // Try to fetch a fresh, non-expired recording URL from Stream.io if callId exists
+        if (meeting.callId) {
+            console.log("Fetching fresh recording URL dynamically for callId:", meeting.callId);
+            const recordingUrl = await getCallRecording(meeting.callId, meeting.startTime);
+            if (recordingUrl) {
+                meeting.recordingUrl = recordingUrl;
+                await meeting.save();
+                return res.status(200).json({ recordingUrl });
+            }
+        }
+
+        // Fallback to the stored URL if fresh fetch yields nothing (or if callId is missing)
         if (meeting.recordingUrl) {
             return res.status(200).json({ recordingUrl: meeting.recordingUrl });
-        }
-
-        // Try to fetch from Stream.io again (assuming callId is unknown, but actually we didn't save callId in DB!)
-        // WAIT: We need to save `callId` in the Meeting schema to be able to re-fetch it later.
-        // Current Schema doesn't have `callId`. I must add it first.
-
-        // This is a blocker. I need to update the Schema first.
-        // But for this step, let's assume I will update the schema.
-
-        if (!meeting.callId) {
-            return res.status(400).json({ message: "No Call ID associated with this meeting" });
-        }
-
-        const recordingUrl = await getCallRecording(meeting.callId, meeting.startTime);
-
-        if (recordingUrl) {
-            meeting.recordingUrl = recordingUrl;
-            await meeting.save();
-            return res.status(200).json({ recordingUrl });
         }
 
         res.status(404).json({ message: "Recording still not available" });

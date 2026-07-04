@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router";
 import { formatDistanceToNow } from "date-fns";
 import { ArrowBigUp, ArrowBigDown, MessageSquare, Trash2, Bookmark } from "lucide-react";
@@ -11,6 +11,9 @@ const PostCard = ({ post, onVote, onBookmark, onDelete, isBookmarked = false, us
   const [localVote, setLocalVote] = useState(userVote);
   const [localScore, setLocalScore] = useState(post.upvotesCount - post.downvotesCount);
   const [showHeartPop, setShowHeartPop] = useState(false);
+
+  // Use a ref to synchronously track current vote state across rapid double-clicks
+  const localVoteRef = useRef(userVote);
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [viewingUser, setViewingUser] = useState(null);
@@ -25,21 +28,24 @@ const PostCard = ({ post, onVote, onBookmark, onDelete, isBookmarked = false, us
 
   // Keep local state in sync with server changes
   useEffect(() => {
+    localVoteRef.current = userVote;
     setLocalVote(userVote);
     setLocalScore(post.upvotesCount - post.downvotesCount);
   }, [userVote, post.upvotesCount, post.downvotesCount]);
 
   const handleVoteClick = (type) => {
+    const currentVote = localVoteRef.current;
     let newVote = 0;
-    if (localVote === type) {
+    if (currentVote === type) {
       newVote = 0; // Toggle off
     } else {
       newVote = type;
     }
 
-    const diff = newVote - localVote;
-    setLocalScore((prev) => prev + diff);
+    const diff = newVote - currentVote;
+    localVoteRef.current = newVote;
     setLocalVote(newVote);
+    setLocalScore((prev) => prev + diff);
 
     // Run backend request in background
     onVote?.(newVote);
@@ -51,10 +57,12 @@ const PostCard = ({ post, onVote, onBookmark, onDelete, isBookmarked = false, us
       return;
     }
 
-    if (localVote !== 1) {
-      const diff = 1 - localVote;
-      setLocalScore((prev) => prev + diff);
+    const currentVote = localVoteRef.current;
+    if (currentVote !== 1) {
+      const diff = 1 - currentVote;
+      localVoteRef.current = 1;
       setLocalVote(1);
+      setLocalScore((prev) => prev + diff);
       onVote?.(1);
     }
 

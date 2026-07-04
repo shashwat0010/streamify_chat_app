@@ -50,19 +50,7 @@ const MeetingHistoryPage = () => {
                                         </div>
 
                                         <div className="flex gap-2">
-                                            {meeting.recordingUrl ? (
-                                                <a
-                                                    href={meeting.recordingUrl}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="btn btn-primary btn-sm gap-2"
-                                                >
-                                                    <PlayCircleIcon size={16} />
-                                                    Recording
-                                                </a>
-                                            ) : (
-                                                <CheckRecordingButton meeting={meeting} />
-                                            )}
+                                            <RecordingButton meeting={meeting} />
                                             {!meeting.summary && (
                                                 <button className="btn btn-ghost btn-sm gap-2" disabled>
                                                     <FileTextIcon size={16} />
@@ -81,41 +69,61 @@ const MeetingHistoryPage = () => {
     );
 };
 
-// Component to handle individual recording checks
-const CheckRecordingButton = ({ meeting }) => {
+// Component to handle dynamic signed URL retrieval and recording checks
+const RecordingButton = ({ meeting }) => {
     const [isLoading, setIsLoading] = React.useState(false);
-
-    // We need access to query invalidation
     const queryClient = useQueryClient();
 
-    const handleCheck = async () => {
+    const handleClick = async () => {
         setIsLoading(true);
         try {
-            const { checkMeetingRecording } = await import("../lib/api"); // dynamic import or regular
-            await checkMeetingRecording(meeting._id);
-            toast.success("Recording found! Refreshing...");
-            queryClient.invalidateQueries({ queryKey: ["meetings"] });
+            const { checkMeetingRecording } = await import("../lib/api");
+            const data = await checkMeetingRecording(meeting._id);
+            if (data.recordingUrl) {
+                // Dynamically open the fresh, signed, non-expired URL!
+                window.open(data.recordingUrl, "_blank", "noopener,noreferrer");
+
+                // Invalidate query if the URL was not saved in DB previously
+                if (!meeting.recordingUrl) {
+                    queryClient.invalidateQueries({ queryKey: ["meetings"] });
+                }
+            } else {
+                toast.error("Recording not yet available.");
+            }
         } catch (error) {
             if (error.response?.status === 404) {
                 toast.error("Recording not yet available.");
             } else {
-                toast.error("Failed to check recording.");
+                toast.error("Failed to access recording.");
             }
         } finally {
             setIsLoading(false);
         }
     };
 
+    if (meeting.recordingUrl) {
+        return (
+            <button
+                className="btn btn-primary btn-sm gap-2"
+                onClick={handleClick}
+                disabled={isLoading}
+            >
+                {isLoading ? <span className="loading loading-spinner loading-xs"></span> : <PlayCircleIcon size={16} />}
+                Recording
+            </button>
+        );
+    }
+
     return (
         <button
             className="btn btn-outline btn-sm gap-2"
-            onClick={handleCheck}
+            onClick={handleClick}
             disabled={isLoading}
         >
             {isLoading ? <span className="loading loading-spinner loading-xs"></span> : <PlayCircleIcon size={16} />}
-            {isLoading ? "Checking..." : "Check Rec"}
+            Check Rec
         </button>
     );
-}
+};
 
 export default MeetingHistoryPage;

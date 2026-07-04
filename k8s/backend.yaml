@@ -30,17 +30,17 @@ spec:
               value: "redis://redis:6379"
             - name: CLIENT_URL
               value: "http://streamify-frontend"
-            # These secrets would ideally be sourced from K8s Secrets, configured here as placeholder refs
+            # These secrets should be sourced from K8s Secrets, configured here with placeholders
             - name: JWT_SECRET_KEY
-              value: "prod_k8s_secret_jwt_key_streamify"
+              value: "your_jwt_secret_key"
             - name: STREAM_API_KEY
-              value: "zwea8dda3prb"
+              value: "your_stream_api_key"
             - name: STREAM_API_SECRET
-              value: "xg8qqqy266hbg6jdawfvhtf3nbctezwmd4rc8fdhxmbbsxywnqqnvc64erfpfns4"
+              value: "your_stream_api_secret"
             - name: CLERK_SECRET_KEY
-              value: "sk_test_ijV6Nj9jO6HsJRYweXa6tF659ePpazHz3QxhQv6Ogl"
+              value: "your_clerk_secret_key"
             - name: CLERK_PUBLISHABLE_KEY
-              value: "pk_test_d2VsY29tZWQtb3Bvc3N1bS04Ni5jbGVyay5hY2NvdW50cy5kZXYk"
+              value: "your_clerk_publishable_key"
 ---
 apiVersion: v1
 kind: Service

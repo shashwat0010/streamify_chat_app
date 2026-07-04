@@ -40,3 +40,8 @@ coverage/
 
 # User uploaded files (local dev only - use S3 in production)
 backend/uploads/
+
+# IDE/Agent execution logs and tracking files
+runs*.json
+job.log
+job_log*

@@ -1,11 +1,11 @@
 import { Link, useLocation, useNavigate } from "react-router";
 import useAuthUser from "../hooks/useAuthUser";
-import { BellIcon, LogOutIcon, ShipWheelIcon, SearchIcon } from "lucide-react";
+import { BellIcon, LogOutIcon, ShipWheelIcon, SearchIcon, MenuIcon } from "lucide-react";
 import ThemeSelector from "./ThemeSelector";
 import useLogout from "../hooks/useLogout";
 import Avatar from "./Avatar";
 
-const Navbar = () => {
+const Navbar = ({ showSidebar = false }) => {
   const { authUser } = useAuthUser();
   const location = useLocation();
   const navigate = useNavigate();
@@ -16,6 +16,13 @@ const Navbar = () => {
     <nav className="bg-base-200 border-b border-base-300 sticky top-0 z-30 h-16 flex items-center">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between w-full gap-4">
+          {/* Hamburger Menu toggle for mobile */}
+          {showSidebar && (
+            <label htmlFor="sidebar-drawer" className="btn btn-ghost btn-circle lg:hidden flex-shrink-0">
+              <MenuIcon className="size-6 text-base-content opacity-75" />
+            </label>
+          )}
+
           {/* LOGO - ONLY IN THE CHAT PAGE */}
           {isChatPage ? (
             <div className="pl-5 flex-shrink-0">

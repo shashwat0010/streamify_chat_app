@@ -2,13 +2,15 @@ import { Link, useLocation } from "react-router";
 import useAuthUser from "../hooks/useAuthUser";
 import { useQuery } from "@tanstack/react-query";
 import { getJoinedCommunities } from "../lib/api";
+import { useCreatePostModalStore } from "../store/useCreatePostModalStore";
 import { BellIcon, HomeIcon, ShipWheelIcon, UsersIcon, HistoryIcon, CompassIcon, BookmarkIcon, PenSquareIcon } from "lucide-react";
 import Avatar from "./Avatar";
 
-const Sidebar = () => {
+const Sidebar = ({ isMobile = false }) => {
   const { authUser } = useAuthUser();
   const location = useLocation();
   const currentPath = location.pathname;
+  const { openModal } = useCreatePostModalStore();
 
   // Query user's joined communities for Reddit sidebar view
   const { data: joinedData } = useQuery({
@@ -20,7 +22,7 @@ const Sidebar = () => {
   const joinedCommunities = joinedData?.communities || [];
 
   return (
-    <aside className="w-64 bg-base-200 border-r border-base-300 hidden lg:flex flex-col h-screen sticky top-0">
+    <aside className={`w-64 bg-base-200 border-r border-base-300 flex-col h-screen sticky top-0 ${isMobile ? "flex w-full border-r-0" : "hidden lg:flex"}`}>
       <div className="p-5 border-b border-base-300">
         <Link to="/" className="flex items-center gap-2.5">
           <ShipWheelIcon className="size-9 text-primary" />
@@ -31,13 +33,13 @@ const Sidebar = () => {
       </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-14rem)]">
-        <Link
-          to="/communities"
+        <button
+          onClick={openModal}
           className="btn btn-primary justify-start w-full gap-3 px-3 normal-case rounded-xl mb-2"
         >
           <PenSquareIcon className="size-5" />
           <span>Create Post</span>
-        </Link>
+        </button>
 
         <Link
           to="/"

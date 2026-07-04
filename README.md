@@ -91,7 +91,6 @@ graph TD
 * **Clerk Node SDK** (Authentication Middleware)
 * **GetStream Node SDK** (Token generation & Webhooks)
 * **AWS SDK (S3)** (Direct S3 presigned URL uploads)
-* **Nodemailer** (Email notifications / SMTP)
 
 ---
 
@@ -134,12 +133,6 @@ AWS_ACCESS_KEY_ID=your_aws_access_key
 AWS_SECRET_ACCESS_KEY=your_aws_secret_key
 AWS_REGION=your_aws_region
 AWS_S3_BUCKET_NAME=your_bucket_name
-
-# Nodemailer / SMTP Settings
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your_gmail@gmail.com
-SMTP_PASS=your_gmail_app_password
 ```
 Run the backend server (ensure your local Redis server is running first):
 ```bash

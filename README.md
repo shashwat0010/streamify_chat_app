@@ -61,7 +61,7 @@ graph TB
     
     Client <-->|Auth Tokens| Clerk
     Client <-->|WebRTC Video & Chat| Stream
-    Client -->|Direct Upload (Presigned)| S3
+    Client -->|Direct Upload - Presigned| S3
 ```
 
 ### Architecture Overview
